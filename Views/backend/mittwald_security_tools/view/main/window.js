@@ -15,7 +15,8 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.main.Window', {
         me.mainTabPanel = Ext.create(
             'Shopware.apps.MittwaldSecurityTools.view.tabs.Main',
             {
-                checkResultStore: me.checkResultStore
+                checkResultStore: me.checkResultStore,
+                failedLoginStore: me.failedLoginStore
             }
         );
         me.items = [

@@ -10,6 +10,20 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.tabs.Main', {
             Ext.create('Shopware.apps.MittwaldSecurityTools.view.default.Accordion',
                 {
                     checkResultStore: me.checkResultStore
+                }),
+
+            Ext.create('Shopware.apps.MittwaldSecurityTools.view.failedlogin.Grid',
+                {
+                    store      : me.failedLoginStore,
+                    dockedItems: [
+                        Ext.create('Ext.toolbar.Paging',
+                            {
+                                store      : me.failedLoginStore,
+                                dock       : 'bottom',
+                                displayInfo: true
+                            }
+                        )
+                    ]
                 })
         ];
 

@@ -9,9 +9,9 @@ Ext.define('Shopware.apps.MittwaldSecurityTools', {
     bulkLoad   : true,
     loadPath   : '{url action=load}',
     controllers: ['Main'],
-    views      : ['main.Window', 'tabs.Main', 'default.Accordion'],
-    stores     : ['CheckResult'],
-    models     : ['CheckResult'],
+    views      : ['main.Window', 'tabs.Main', 'default.Accordion', 'failedlogin.Grid'],
+    stores     : ['CheckResult', 'FailedLogin'],
+    models     : ['CheckResult', 'FailedLogin'],
     launch     : function () {
         var me = this;
         var controller = me.getController('Main');

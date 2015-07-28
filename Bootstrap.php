@@ -80,6 +80,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             );
 
             $this->registerController('Backend', 'MittwaldSecurityTools');
+            $this->registerController('Backend', 'MittwaldFailedLogins');
 
             $this->createMenuItem(array(
                                       'label'      => 'Mittwald Security Tools',
@@ -91,6 +92,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                                   ));
 
             $this->createCronJob('Security Check', 'MittwaldSecurityCheck', 1);
+
+            $this->createSchema();
 
             return TRUE;
         }
@@ -137,12 +140,76 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
 
     /**
+     * register our models
+     */
+    public function afterInit()
+    {
+        $this->registerCustomModels();
+    }
+
+
+
+    /**
+     * @throws \Doctrine\ORM\Tools\ToolsException
+     */
+    protected function createSchema()
+    {
+        $this->registerCustomModels();
+
+        $em   = $this->Application()->Models();
+        $tool = new \Doctrine\ORM\Tools\SchemaTool($em);
+
+        $classes = array(
+            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin')
+        );
+
+        try
+        {
+            $tool->dropSchema($classes);
+        }
+        catch (Exception $e)
+        {
+            //ignore
+        }
+        $tool->createSchema($classes);
+    }
+
+
+
+    /**
+     * @throws \Doctrine\ORM\Tools\ToolsException
+     */
+    protected function dropSchema()
+    {
+        $this->registerCustomModels();
+
+        $em   = $this->Application()->Models();
+        $tool = new \Doctrine\ORM\Tools\SchemaTool($em);
+
+        $classes = array(
+            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin')
+        );
+
+        try
+        {
+            $tool->dropSchema($classes);
+        }
+        catch (Exception $e)
+        {
+            //ignore
+        }
+    }
+
+
+
+    /**
      * do nothing atm
      *
      * @return bool
      */
     public function uninstall()
     {
+        $this->dropSchema();
 
         return TRUE;
     }

@@ -6,9 +6,11 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.controller.Main', {
         var me = this;
 
         me.checkResultStore = me.getStore('CheckResult');
+        me.failedLoginStore = me.getStore('FailedLogin');
 
         me.mainWindow = me.getView('main.Window').create({
-            checkResultStore: me.checkResultStore
+            checkResultStore: me.checkResultStore,
+            failedLoginStore: me.failedLoginStore
         }).show();
     }
 });
