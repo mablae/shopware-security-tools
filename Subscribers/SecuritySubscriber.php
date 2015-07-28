@@ -38,14 +38,23 @@ class SecuritySubscriber implements SubscriberInterface
     protected $logger;
 
 
+    /**
+     * @var \Enlight_Components_Db_Adapter_Pdo_Mysql
+     */
+    protected $db;
 
-    public function __construct(\Enlight_Config $config, ModelManager $modelManager)
+
+
+    public function __construct(\Enlight_Config $config, ModelManager $modelManager,
+                                \Enlight_Components_Db_Adapter_Pdo_Mysql $db)
     {
         $this->config = $config;
 
         $this->logger = new LogService($this->config);
 
         $this->modelManager = $modelManager;
+
+        $this->db = $db;
     }
 
 
@@ -56,8 +65,9 @@ class SecuritySubscriber implements SubscriberInterface
     public static function getSubscribedEvents()
     {
         return [
-            'Shopware_Modules_Admin_Login_FilterResult'            => 'logFailedFELogin',
-            'Enlight_Controller_Action_PostDispatch_Backend_Login' => 'logFailedBELogin'
+            'Shopware_Modules_Admin_Login_FilterResult'                 => 'logFailedFELogin',
+            'Enlight_Controller_Action_PostDispatch_Backend_Login'      => 'logFailedBELogin',
+            'Shopware_CronJob_MittwaldSecurityCheckCleanUpFailedLogins' => 'onLogCleanupCron'
         ];
     }
 
@@ -71,12 +81,15 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function logFailedFELogin(\Enlight_Event_EventArgs $args)
     {
-        $mail = $args->getEmail();
-        $errors = $args->getError();
-
-        if($errors)
+        if ($this->config->logFailedFELogins)
         {
-            $this->saveFailedLogin($mail, FALSE);
+            $mail   = $args->getEmail();
+            $errors = $args->getError();
+
+            if ($errors)
+            {
+                $this->saveFailedLogin($mail, FALSE);
+            }
         }
         return $args->getReturn();
     }
@@ -91,16 +104,18 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function logFailedBELogin(\Enlight_Event_EventArgs $args)
     {
-        /**
-         * @var \Shopware_Controllers_Backend_Login $controller
-         */
-        $controller = $args->getSubject();
-
-        if (!$controller->View()->getAssign('success') && $controller->View()->getAssign('user'))
+        if ($this->config->logFailedBELogins)
         {
-            $this->saveFailedLogin($controller->View()->getAssign('user'), TRUE);
-        }
+            /**
+             * @var \Shopware_Controllers_Backend_Login $controller
+             */
+            $controller = $args->getSubject();
 
+            if (!$controller->View()->getAssign('success') && $controller->View()->getAssign('user'))
+            {
+                $this->saveFailedLogin($controller->View()->getAssign('user'), TRUE);
+            }
+        }
         return;
     }
 
@@ -123,5 +138,44 @@ class SecuritySubscriber implements SubscriberInterface
     }
 
 
+
+    /**
+     * cron event listerener for log table cleanup
+     *
+     * @return bool
+     */
+    public function onLogCleanupCron()
+    {
+        if ($this->config->cleanUpLogFailedBELogins)
+        {
+            $interval = intval($this->config->cleanUpLogFailedBELoginsInterval);
+            $this->cleanUpLogTable($interval, TRUE);
+        }
+
+        if ($this->config->cleanUpLogFailedFELogins)
+        {
+            $interval = intval($this->config->cleanUpLogFailedFELoginsInterval);
+            $this->cleanUpLogTable($interval, FALSE);
+        }
+
+        return TRUE;
+    }
+
+
+
+    /**
+     * @param $interval
+     * @param $isBackend
+     */
+    protected function cleanUpLogTable($interval, $isBackend)
+    {
+        $relevantDateTime = new \DateTime('now - ' . $interval . ' days');
+
+        $sql = "DELETE FROM s_plugin_mittwald_security_failed_logins
+                    WHERE isBackend = " . ($isBackend ? 1 : 0) . "
+                    AND UNIX_TIMESTAMP(created) < ?";
+
+        $this->db->query($sql, array($relevantDateTime->getTimestamp()));
+    }
 
 }

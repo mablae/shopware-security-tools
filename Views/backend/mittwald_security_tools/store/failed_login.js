@@ -1,12 +1,11 @@
 Ext.define('Shopware.apps.MittwaldSecurityTools.store.FailedLogin', {
-    extend:'Shopware.store.Listing',
+    extend: 'Shopware.store.Listing',
 
-    configure: function() {
+    configure: function () {
         return {
             controller: 'MittwaldFailedLogins'
         };
     },
-    model: 'Shopware.apps.MittwaldSecurityTools.model.FailedLogin',
-    autoLoad: true,
-    pageSize: 1
+    model    : 'Shopware.apps.MittwaldSecurityTools.model.FailedLogin',
+    autoLoad : true
 });

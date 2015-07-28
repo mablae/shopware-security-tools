@@ -15,6 +15,7 @@ class SslService implements CheckServiceInterface
 {
 
 
+
     /**
      * @var \Enlight_Config
      */

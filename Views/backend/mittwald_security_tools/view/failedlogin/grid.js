@@ -1,7 +1,7 @@
 Ext.define('Shopware.apps.MittwaldSecurityTools.view.failedlogin.Grid', {
-    extend       : 'Ext.grid.Panel',
-    title        : 'Fehlgeschlagene Loginversuche',
-    columns      : [
+    extend : 'Ext.grid.Panel',
+    title  : 'Fehlgeschlagene Loginversuche',
+    columns: [
         {
             text     : 'Zeitpunkt',
             dataIndex: 'created',

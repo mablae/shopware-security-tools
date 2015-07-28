@@ -64,35 +64,11 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         try
         {
-            //normal call
-            $this->subscribeEvent(
-                'Enlight_Controller_Front_StartDispatch',
-                'onStartDispatch'
-            );
-
-            /*
-             * CLI-call will not trigger Enlight_Controller_Front_StartDispatch Event.
-             * Use Enlight_Bootstrap_InitResource_Cron Event.
-             */
-            $this->subscribeEvent(
-                'Enlight_Bootstrap_InitResource_Cron',
-                'onStartDispatch'
-            );
-
-            $this->registerController('Backend', 'MittwaldSecurityTools');
-            $this->registerController('Backend', 'MittwaldFailedLogins');
-
-            $this->createMenuItem(array(
-                                      'label'      => 'Mittwald Security Tools',
-                                      'controller' => 'MittwaldSecurityTools',
-                                      'class'      => 'sprite-box-zipper',
-                                      'action'     => 'Index',
-                                      'active'     => 1,
-                                      'parent'     => $this->Menu()->findOneBy('label', 'Einstellungen')
-                                  ));
-
-            $this->createCronJob('Security Check', 'MittwaldSecurityCheck', 1);
-
+            $this->registerEvents();
+            $this->registerControllers();
+            $this->createMenuEntries();
+            $this->createCronJobs();
+            $this->createForm();
             $this->createSchema();
 
             return TRUE;
@@ -104,6 +80,29 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 'message' => $ex->getMessage()
             ];
         }
+    }
+
+
+
+    /**
+     *
+     * @return bool
+     */
+    public function uninstall()
+    {
+        $this->dropSchema();
+
+        return TRUE;
+    }
+
+
+
+    /**
+     * register our models
+     */
+    public function afterInit()
+    {
+        $this->registerCustomModels();
     }
 
 
@@ -128,23 +127,14 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
             $subscriber = new \Shopware\Mittwald\SecurityTools\Subscribers\SecuritySubscriber(
                 $this->Config(),
-                $this->get('models')
+                $this->get('models'),
+                $this->get('db')
             );
 
             $this->Application()->Events()->addSubscriber($subscriber);
 
             $this->isInitialized = TRUE;
         }
-    }
-
-
-
-    /**
-     * register our models
-     */
-    public function afterInit()
-    {
-        $this->registerCustomModels();
     }
 
 
@@ -203,15 +193,92 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
 
     /**
-     * do nothing atm
-     *
-     * @return bool
+     * creates the config form
      */
-    public function uninstall()
+    protected function createForm()
     {
-        $this->dropSchema();
+        $form = $this->Form();
+        $form->setElement('checkbox', 'logFailedBELogins', array(
+            'label'    => 'Fehlgeschlagene Backend-Logins loggen',
+            'required' => TRUE
+        ));
 
-        return TRUE;
+        $form->setElement('checkbox', 'logFailedFELogins', array(
+            'label'    => 'Fehlgeschlagene Frontend-Logins loggen',
+            'required' => TRUE
+        ));
+
+        $form->setElement('checkbox', 'cleanUpLogFailedBELogins', array(
+            'label'    => 'Fehlgeschlagene Backend-Logins bereinigen',
+            'required' => TRUE
+        ));
+
+        $form->setElement('number', 'cleanUpLogFailedBELoginsInterval', array(
+            'label'    => 'Vorhaltezeit für fehlgeschlagene Backend-Logins in Tagen',
+            'required' => TRUE,
+            'value'    => 7
+        ));
+
+        $form->setElement('checkbox', 'cleanUpLogFailedFELogins', array(
+            'label'    => 'Fehlgeschlagene Frontend-Logins bereinigen',
+            'required' => TRUE
+        ));
+
+        $form->setElement('number', 'cleanUpLogFailedFELoginsInterval', array(
+            'label'    => 'Vorhaltezeit für fehlgeschlagene Frontend-Logins in Tagen',
+            'required' => TRUE,
+            'value'    => 2
+        ));
+    }
+
+
+
+    protected function registerEvents()
+    {
+        //normal call
+        $this->subscribeEvent(
+            'Enlight_Controller_Front_StartDispatch',
+            'onStartDispatch'
+        );
+
+        /*
+         * CLI-call will not trigger Enlight_Controller_Front_StartDispatch Event.
+         * Use Enlight_Bootstrap_InitResource_Cron Event.
+         */
+        $this->subscribeEvent(
+            'Enlight_Bootstrap_InitResource_Cron',
+            'onStartDispatch'
+        );
+    }
+
+
+
+    protected function registerControllers()
+    {
+        $this->registerController('Backend', 'MittwaldSecurityTools');
+        $this->registerController('Backend', 'MittwaldFailedLogins');
+    }
+
+
+
+    protected function createMenuEntries()
+    {
+        $this->createMenuItem(array(
+                                  'label'      => 'Mittwald Security Tools',
+                                  'controller' => 'MittwaldSecurityTools',
+                                  'class'      => 'sprite-box-zipper',
+                                  'action'     => 'Index',
+                                  'active'     => 1,
+                                  'parent'     => $this->Menu()->findOneBy('label', 'Einstellungen')
+                              ));
+    }
+
+
+
+    protected function createCronJobs()
+    {
+        $this->createCronJob('Security Check', 'MittwaldSecurityCheck');
+        $this->createCronJob('Failed Login Log aufräumen', 'MittwaldSecurityCheckCleanUpFailedLogins');
     }
 
 }

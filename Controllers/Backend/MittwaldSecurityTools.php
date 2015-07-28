@@ -57,7 +57,7 @@ class Shopware_Controllers_Backend_MittwaldSecurityTools extends Shopware_Contro
             $this->sslService->getResult()
         );
 
-        foreach($results as $key => $result)
+        foreach ($results as $key => $result)
         {
             $results[$key]['id'] = ($key + 1);
         }
