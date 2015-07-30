@@ -40,6 +40,15 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.default.Accordion', {
                     flex     : 1,
                     renderer : me.checkResultRenderer
                 }
+            ],
+            dockedItems: [
+                Ext.create('Ext.toolbar.Paging',
+                    {
+                        store      : me.checkResultStore,
+                        dock       : 'bottom',
+                        displayInfo: true
+                    }
+                )
             ]
         });
     },

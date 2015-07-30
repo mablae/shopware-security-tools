@@ -131,6 +131,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
 
     /**
+     * add our custom tables to database
+     *
      * @throws \Doctrine\ORM\Tools\ToolsException
      */
     protected function createSchema()
@@ -154,6 +156,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
 
     /**
+     * drops our database tables
+     *
      * @throws \Doctrine\ORM\Tools\ToolsException
      */
     protected function dropSchema()
@@ -238,7 +242,11 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         ));
     }
 
-
+    /**
+     * register our events
+     *
+     * there will only be the onStartDispatch handler, which adds our event subscriber
+     */
     protected function registerEvents()
     {
         //normal call
@@ -257,14 +265,20 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         );
     }
 
-
+    /**
+     * registers our controllers
+     *
+     * @throws Exception
+     */
     protected function registerControllers()
     {
         $this->registerController('Backend', 'MittwaldSecurityTools');
         $this->registerController('Backend', 'MittwaldFailedLogins');
     }
 
-
+    /**
+     * create the menu item
+     */
     protected function createMenuEntries()
     {
         $this->createMenuItem(array(
@@ -277,7 +291,9 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         ));
     }
 
-
+    /**
+     * add our cronjobs
+     */
     protected function createCronJobs()
     {
         $this->createCronJob('Security Check', 'MittwaldSecurityCheck');
@@ -285,6 +301,9 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $this->createCronJob('Failed Login Log aufräumen', 'MittwaldSecurityCheckCleanUpFailedLogins');
     }
 
+    /**
+     * inserts our mail template
+     */
     public function insertMailTemplate()
     {
         $sql = <<<EOT
@@ -300,6 +319,9 @@ EOT;
         $this->get('db')->executeUpdate($sql);
     }
 
+    /**
+     * removes our mail template on plugin deinstallation
+     */
     public function removeMailTemplate()
     {
         $sql = 'DELETE FROM `s_core_config_mails`

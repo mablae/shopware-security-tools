@@ -35,7 +35,9 @@ class Shopware_Controllers_Backend_MittwaldSecurityTools extends Shopware_Contro
     protected $db;
 
 
-
+    /**
+     * initialize all dependencies
+     */
     public function init()
     {
         $this->config          = Shopware()->Plugins()->Core()->MittwaldSecurityTools()->Config();
@@ -49,7 +51,9 @@ class Shopware_Controllers_Backend_MittwaldSecurityTools extends Shopware_Contro
     }
 
 
-
+    /**
+     * do the actual checks
+     */
     public function doChecksAction()
     {
         $results = array_merge(

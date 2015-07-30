@@ -2,6 +2,8 @@
 
 
 /**
+ * standard controller for the failed login model
+ *
  * Class Shopware_Controllers_Backend_MittwaldFailedLogins
  *
  * @author Philipp Mahlow <p.mahlow@mittwald.de>
