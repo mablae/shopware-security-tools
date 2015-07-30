@@ -52,24 +52,25 @@ class SecuritySubscriber implements SubscriberInterface
      */
     protected $templateMail;
 
+    /**
+     * @var string
+     */
+    protected $path;
 
     public function __construct(\Enlight_Config $pluginConfig,
                                 \Shopware_Components_Config $shopConfig,
                                 ModelManager $modelManager,
                                 \Enlight_Components_Db_Adapter_Pdo_Mysql $db,
-                                \Shopware_Components_TemplateMail $templateMail)
+                                \Shopware_Components_TemplateMail $templateMail,
+                                $path)
     {
         $this->pluginConfig = $pluginConfig;
-
         $this->shopConfig = $shopConfig;
-
         $this->logger = new LogService($this->pluginConfig);
-
         $this->modelManager = $modelManager;
-
         $this->templateMail = $templateMail;
-
         $this->db = $db;
+        $this->path = $path;
     }
 
 
@@ -82,8 +83,20 @@ class SecuritySubscriber implements SubscriberInterface
             'Shopware_Modules_Admin_Login_FilterResult' => 'logFailedFELogin',
             'Enlight_Controller_Action_PostDispatch_Backend_Login' => 'logFailedBELogin',
             'Shopware_CronJob_MittwaldSecurityCheckCleanUpFailedLogins' => 'onLogCleanupCron',
-            'Shopware_CronJob_MittwaldSecurityCheckFailedLoginNotification' => 'onCheckNotification'
+            'Shopware_CronJob_MittwaldSecurityCheckFailedLoginNotification' => 'onCheckNotification',
+            'Enlight_Controller_Action_PostDispatchSecure_Backend' => 'addMenuTemplates'
         ];
+    }
+
+    public function addMenuTemplates(\Enlight_Event_EventArgs $args)
+    {
+        /**
+         * @var \Enlight_Controller_Action $controller
+         */
+        $controller = $args->getSubject();
+
+        $view = $controller->View();
+        $view->extendsTemplate($this->path . '/Views/backend/index/header.tpl');
     }
 
     /**

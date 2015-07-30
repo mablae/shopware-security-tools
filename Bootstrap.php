@@ -120,7 +120,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 Shopware()->Config(),
                 $this->get('models'),
                 $this->get('db'),
-                $this->get('templatemail')
+                $this->get('templatemail'),
+                $this->Path()
             );
 
             $this->Application()->Events()->addSubscriber($subscriber);
@@ -284,7 +285,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $this->createMenuItem(array(
             'label' => 'Mittwald Security Tools',
             'controller' => 'MittwaldSecurityTools',
-            'class' => 'sprite-box-zipper',
+            'class' => 'mittwald-custom-icon',
             'action' => 'Index',
             'active' => 1,
             'parent' => $this->Menu()->findOneBy('label', 'Einstellungen')
