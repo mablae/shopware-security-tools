@@ -10,12 +10,10 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 {
 
 
-
     /**
      * @var bool
      */
     protected $isInitialized = FALSE;
-
 
 
     /**
@@ -27,7 +25,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     }
 
 
-
     /**
      * @return string
      */
@@ -37,22 +34,20 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     }
 
 
-
     /**
      * @return array
      */
     public function getInfo()
     {
         return array(
-            'version'     => $this->getVersion(),
-            'copyright'   => 'Copyright (c) 2015, Mittwald CM-Service GmbH & Co.KG',
-            'label'       => $this->getLabel(),
+            'version' => $this->getVersion(),
+            'copyright' => 'Copyright (c) 2015, Mittwald CM-Service GmbH & Co.KG',
+            'label' => $this->getLabel(),
             'description' => file_get_contents($this->Path() . 'info.txt'),
-            'link'        => 'http://www.mittwald.de',
-            'author'      => 'Philipp Mahlow | Mittwald CM-Service GmbH & Co.KG'
+            'link' => 'http://www.mittwald.de',
+            'author' => 'Philipp Mahlow | Mittwald CM-Service GmbH & Co.KG'
         );
     }
-
 
 
     /**
@@ -62,19 +57,17 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function install()
     {
-        try
-        {
+        try {
             $this->registerEvents();
             $this->registerControllers();
             $this->createMenuEntries();
             $this->createCronJobs();
             $this->createForm();
             $this->createSchema();
+            $this->insertMailTemplate();
 
             return TRUE;
-        }
-        catch (Exception $ex)
-        {
+        } catch (Exception $ex) {
             return [
                 'success' => FALSE,
                 'message' => $ex->getMessage()
@@ -83,18 +76,17 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     }
 
 
-
     /**
      *
      * @return bool
      */
     public function uninstall()
     {
+        $this->removeMailTemplate();
         $this->dropSchema();
 
         return TRUE;
     }
-
 
 
     /**
@@ -104,7 +96,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         $this->registerCustomModels();
     }
-
 
 
     /**
@@ -118,8 +109,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         /*
          * prevent double initialization
          */
-        if (!$this->isInitialized)
-        {
+        if (!$this->isInitialized) {
             $this->Application()->Loader()->registerNamespace(
                 'Shopware\\Mittwald\\SecurityTools',
                 $this->Path()
@@ -127,8 +117,10 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
             $subscriber = new \Shopware\Mittwald\SecurityTools\Subscribers\SecuritySubscriber(
                 $this->Config(),
+                Shopware()->Config(),
                 $this->get('models'),
-                $this->get('db')
+                $this->get('db'),
+                $this->get('templatemail')
             );
 
             $this->Application()->Events()->addSubscriber($subscriber);
@@ -138,7 +130,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     }
 
 
-
     /**
      * @throws \Doctrine\ORM\Tools\ToolsException
      */
@@ -146,24 +137,20 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         $this->registerCustomModels();
 
-        $em   = $this->Application()->Models();
+        $em = $this->Application()->Models();
         $tool = new \Doctrine\ORM\Tools\SchemaTool($em);
 
         $classes = array(
             $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin')
         );
 
-        try
-        {
+        try {
             $tool->dropSchema($classes);
-        }
-        catch (Exception $e)
-        {
+        } catch (Exception $e) {
             //ignore
         }
         $tool->createSchema($classes);
     }
-
 
 
     /**
@@ -173,23 +160,19 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         $this->registerCustomModels();
 
-        $em   = $this->Application()->Models();
+        $em = $this->Application()->Models();
         $tool = new \Doctrine\ORM\Tools\SchemaTool($em);
 
         $classes = array(
             $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin')
         );
 
-        try
-        {
+        try {
             $tool->dropSchema($classes);
-        }
-        catch (Exception $e)
-        {
+        } catch (Exception $e) {
             //ignore
         }
     }
-
 
 
     /**
@@ -199,38 +182,61 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         $form = $this->Form();
         $form->setElement('checkbox', 'logFailedBELogins', array(
-            'label'    => 'Fehlgeschlagene Backend-Logins loggen',
+            'label' => 'Fehlgeschlagene Backend-Logins loggen',
             'required' => TRUE
         ));
 
         $form->setElement('checkbox', 'logFailedFELogins', array(
-            'label'    => 'Fehlgeschlagene Frontend-Logins loggen',
+            'label' => 'Fehlgeschlagene Frontend-Logins loggen',
             'required' => TRUE
         ));
 
         $form->setElement('checkbox', 'cleanUpLogFailedBELogins', array(
-            'label'    => 'Fehlgeschlagene Backend-Logins bereinigen',
+            'label' => 'Fehlgeschlagene Backend-Logins bereinigen',
             'required' => TRUE
         ));
 
         $form->setElement('number', 'cleanUpLogFailedBELoginsInterval', array(
-            'label'    => 'Vorhaltezeit für fehlgeschlagene Backend-Logins in Tagen',
+            'label' => 'Vorhaltezeit für fehlgeschlagene Backend-Logins in Tagen',
             'required' => TRUE,
-            'value'    => 7
+            'value' => 7
         ));
 
         $form->setElement('checkbox', 'cleanUpLogFailedFELogins', array(
-            'label'    => 'Fehlgeschlagene Frontend-Logins bereinigen',
+            'label' => 'Fehlgeschlagene Frontend-Logins bereinigen',
             'required' => TRUE
         ));
 
         $form->setElement('number', 'cleanUpLogFailedFELoginsInterval', array(
-            'label'    => 'Vorhaltezeit für fehlgeschlagene Frontend-Logins in Tagen',
+            'label' => 'Vorhaltezeit für fehlgeschlagene Frontend-Logins in Tagen',
             'required' => TRUE,
-            'value'    => 2
+            'value' => 2
+        ));
+
+        $form->setElement('checkbox', 'mailNotificationForFailedFELogins', array(
+            'label' => 'Mail-Notifications für fehlgeschlagene Frontend-Logins aktivieren',
+            'required' => TRUE
+        ));
+
+        $form->setElement('number', 'mailNotificationForFailedFELoginsLimit', array(
+            'label' => 'Schwellwert für Mail-Notifications (Frontend)',
+            'description' => 'Übersteigt die Zahl der fehlgeschlagenen Frontend-Logins innerhalb einer Stunde diesen Schwellwert, wird eine Mail-Notifications verschickt.',
+            'required' => TRUE,
+            'value' => 10
+        ));
+
+        $form->setElement('checkbox', 'mailNotificationForFailedBELogins', array(
+            'label' => 'Mail-Notifications für fehlgeschlagene Backend-Logins aktivieren',
+            'required' => TRUE
+        ));
+
+        $form->setElement('number', 'mailNotificationForFailedBELoginsLimit', array(
+            'label' => 'Schwellwert für Mail-Notifications (Backend)',
+            'description' => 'Übersteigt die Zahl der fehlgeschlagenen Backend-Logins innerhalb einer Stunde diesen Schwellwert, wird eine Mail-Notifications verschickt.',
+            'required' => TRUE,
+            'value' => 10
         ));
     }
-
 
 
     protected function registerEvents()
@@ -252,7 +258,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     }
 
 
-
     protected function registerControllers()
     {
         $this->registerController('Backend', 'MittwaldSecurityTools');
@@ -260,25 +265,47 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     }
 
 
-
     protected function createMenuEntries()
     {
         $this->createMenuItem(array(
-                                  'label'      => 'Mittwald Security Tools',
-                                  'controller' => 'MittwaldSecurityTools',
-                                  'class'      => 'sprite-box-zipper',
-                                  'action'     => 'Index',
-                                  'active'     => 1,
-                                  'parent'     => $this->Menu()->findOneBy('label', 'Einstellungen')
-                              ));
+            'label' => 'Mittwald Security Tools',
+            'controller' => 'MittwaldSecurityTools',
+            'class' => 'sprite-box-zipper',
+            'action' => 'Index',
+            'active' => 1,
+            'parent' => $this->Menu()->findOneBy('label', 'Einstellungen')
+        ));
     }
-
 
 
     protected function createCronJobs()
     {
         $this->createCronJob('Security Check', 'MittwaldSecurityCheck');
+        $this->createCronJob('Failed Login Mail Notifications', 'MittwaldSecurityCheckFailedLoginNotification', 3600);
         $this->createCronJob('Failed Login Log aufräumen', 'MittwaldSecurityCheckCleanUpFailedLogins');
+    }
+
+    public function insertMailTemplate()
+    {
+        $sql = <<<EOT
+                    INSERT INTO `s_core_config_mails`
+                        (`id`, `stateId`, `name`, `frommail`, `fromname`, `subject`, `content`, `contentHTML`,
+                         `ishtml`, `attachment`, `mailtype`, `context`, `dirty`)
+                    VALUES (NULL, NULL, 'sFAILEDLOGIN', '{config name=mail}', '{config name=shopName}',
+                            'Fehlgeschlagene Loginversuche im {config name=shopName}',
+                            '{include file="string:{config name=emailheaderplain}"} \nHallo, \nder Schwellwert für fehlgeschlagene Login-Versuche wurde überschritten. Dies kann möglicherweise auf einen Angriff hinweisen. \n{include file="string:{config name=emailfooterplain}"}',
+                            '', '0', '', '2', '', '0');'
+EOT;
+
+        $this->get('db')->executeUpdate($sql);
+    }
+
+    public function removeMailTemplate()
+    {
+        $sql = 'DELETE FROM `s_core_config_mails`
+                WHERE name = "sFAILEDLOGIN"';
+
+        $this->get('db')->executeUpdate($sql);
     }
 
 }
