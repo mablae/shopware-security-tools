@@ -241,6 +241,11 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'required' => TRUE,
             'value' => 10
         ));
+
+        $form->setElement('checkbox', 'showPasswordStrengthForUserRegistration', array(
+            'label' => 'Passwort-Stärke in Registrierungsformular anzeigen',
+            'required' => TRUE
+        ));
     }
 
     /**

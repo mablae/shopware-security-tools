@@ -3,6 +3,7 @@
 namespace Shopware\Mittwald\SecurityTools\Subscribers;
 
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Enlight\Event\SubscriberInterface;
 use Shopware\Components\Model\ModelManager;
 use Shopware\CustomModels\MittwaldSecurityTools\FailedLogin;
@@ -84,8 +85,49 @@ class SecuritySubscriber implements SubscriberInterface
             'Enlight_Controller_Action_PostDispatch_Backend_Login' => 'logFailedBELogin',
             'Shopware_CronJob_MittwaldSecurityCheckCleanUpFailedLogins' => 'onLogCleanupCron',
             'Shopware_CronJob_MittwaldSecurityCheckFailedLoginNotification' => 'onCheckNotification',
-            'Enlight_Controller_Action_PostDispatchSecure_Backend' => 'addMenuTemplates'
+            'Enlight_Controller_Action_PostDispatchSecure_Backend' => 'addMenuTemplates',
+            'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addPasswordStrength',
+            'Theme_Compiler_Collect_Plugin_Less' => 'onCollectLessFiles',
+            'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles'
         ];
+    }
+
+    public function onCollectLessFiles()
+    {
+        $lessDir = $this->path . '/Views/frontend/_public/src/less/';
+
+        $less = new \Shopware\Components\Theme\LessDefinition(
+            array(),
+            array(
+                $lessDir . 'all.less'
+            )
+        );
+
+        return new ArrayCollection(array($less));
+    }
+
+    public function onCollectJSFiles()
+    {
+        $jsDir = $this->path . '/Views/frontend/_public/src/js/';
+
+        return new ArrayCollection(array(
+            $jsDir . 'jQuery.passwordStrength.js'
+        ));
+    }
+
+    public function addPasswordStrength(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->showPasswordStrengthForUserRegistration) {
+            return;
+        }
+
+        /**
+         * @var \Enlight_Controller_Action $controller
+         */
+        $controller = $args->getSubject();
+
+        $view = $controller->View();
+        $view->addTemplateDir($this->path . 'Views');
     }
 
     public function addMenuTemplates(\Enlight_Event_EventArgs $args)

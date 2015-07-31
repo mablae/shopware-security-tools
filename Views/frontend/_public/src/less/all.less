@@ -1,0 +1,62 @@
+.mwst--register--password--strength {
+  .mwst--password--strength--bar--container {
+
+    .mwst--password--strength--bar {
+      &:first-of-type {
+        border-left: 0;
+      }
+      border-left: 1px solid @border-color;
+      width: 25%;
+      float: left;
+      height: 40px;
+    }
+
+    &.mwst--password--strength--0 {
+      .mwst--password--strength--bar--0 {
+        background: @highlight-error;
+      }
+      .mwst--password--strength--bar--1,
+      .mwst--password--strength--bar--2,
+      .mwst--password--strength--bar--3 {
+        background: transparent;
+      }
+    }
+
+    &.mwst--password--strength--1 {
+      .mwst--password--strength--bar--0,
+      .mwst--password--strength--bar--1 {
+        background: @highlight-notice;
+      }
+      .mwst--password--strength--bar--2,
+      .mwst--password--strength--bar--3 {
+        background: transparent;
+      }
+    }
+
+    &.mwst--password--strength--2 {
+      .mwst--password--strength--bar--0,
+      .mwst--password--strength--bar--1,
+      .mwst--password--strength--bar--2 {
+        background: @highlight-notice;
+      }
+      .mwst--password--strength--bar--3 {
+        background: transparent;
+      }
+    }
+
+    &.mwst--password--strength--3 {
+      .mwst--password--strength--bar--0,
+      .mwst--password--strength--bar--1,
+      .mwst--password--strength--bar--2,
+      .mwst--password--strength--bar--3 {
+        background: @highlight-success;
+      }
+    }
+
+    height: 40px;
+
+    border: 1px solid @border-color;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+}
