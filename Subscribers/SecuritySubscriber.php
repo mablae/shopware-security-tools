@@ -5,6 +5,7 @@ namespace Shopware\Mittwald\SecurityTools\Subscribers;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Enlight\Event\SubscriberInterface;
+use Shopware\Components\HttpClient\GuzzleFactory;
 use Shopware\Components\Model\ModelManager;
 use Shopware\CustomModels\MittwaldSecurityTools\FailedLogin;
 use Shopware\Mittwald\SecurityTools\Services\LogService;
@@ -58,11 +59,28 @@ class SecuritySubscriber implements SubscriberInterface
      */
     protected $path;
 
+    /**
+     * @var \GuzzleHttp\ClientInterface
+     */
+    protected $client;
+
+    /**
+     * @var \Shopware_Components_Snippet_Manager
+     */
+    protected $snippets;
+
+    /**
+     * @var bool
+     */
+    protected $captchaChecked = FALSE;
+
     public function __construct(\Enlight_Config $pluginConfig,
                                 \Shopware_Components_Config $shopConfig,
                                 ModelManager $modelManager,
                                 \Enlight_Components_Db_Adapter_Pdo_Mysql $db,
                                 \Shopware_Components_TemplateMail $templateMail,
+                                GuzzleFactory $guzzleFactory,
+                                \Shopware_Components_Snippet_Manager $snippets,
                                 $path)
     {
         $this->pluginConfig = $pluginConfig;
@@ -71,6 +89,8 @@ class SecuritySubscriber implements SubscriberInterface
         $this->modelManager = $modelManager;
         $this->templateMail = $templateMail;
         $this->db = $db;
+        $this->client = $guzzleFactory->createClient();
+        $this->snippets = $snippets;
         $this->path = $path;
     }
 
@@ -86,7 +106,8 @@ class SecuritySubscriber implements SubscriberInterface
             'Shopware_CronJob_MittwaldSecurityCheckCleanUpFailedLogins' => 'onLogCleanupCron',
             'Shopware_CronJob_MittwaldSecurityCheckFailedLoginNotification' => 'onCheckNotification',
             'Enlight_Controller_Action_PostDispatchSecure_Backend' => 'addMenuTemplates',
-            'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addPasswordStrength',
+            'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addTemplates',
+            'Shopware_Modules_Admin_ValidateStep2_FilterResult' => 'recaptchaCheck',
             'Theme_Compiler_Collect_Plugin_Less' => 'onCollectLessFiles',
             'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles'
         ];
@@ -115,9 +136,48 @@ class SecuritySubscriber implements SubscriberInterface
         ));
     }
 
-    public function addPasswordStrength(\Enlight_Event_EventArgs $args)
+    public function recaptchaCheck(\Enlight_Event_EventArgs $args)
     {
-        if (!$this->pluginConfig->showPasswordStrengthForUserRegistration) {
+
+        $return = $args->getReturn();
+
+        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked) {
+            return $return;
+        }
+
+        $postData = $args->getPost();
+
+        $gCaptchaResponse = isset($postData['g-recaptcha-response']) ? $postData['g-recaptcha-response'] : FALSE;
+
+        $response = $this->client->post('https://www.google.com/recaptcha/api/siteverify', [
+            'body' => [
+                'secret' => $this->pluginConfig->recaptchaSecretKey,
+                'response' => $gCaptchaResponse
+            ]
+        ]);
+
+        $responseData = json_decode($response->getBody(), TRUE);
+
+        if (!$responseData['success']) {
+            if (is_array($responseData['error-codes']) &&
+                (in_array('missing-input-secret', $responseData['error-codes']) ||
+                    in_array('invalid-input-secret', $responseData['error-codes']))
+            ) {
+                $this->logger->error('reCAPTCHA', 'secret is not valid.');
+            }
+
+            $return[0][] = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/reCAPTCHA')
+                ->get('captchaFailed', 'Captcha-Überprüfung fehlgeschlagen', TRUE);
+        }
+
+        $this->captchaChecked = TRUE;
+
+        return $return;
+    }
+
+    public function addTemplates(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->showPasswordStrengthForUserRegistration && !$this->pluginConfig->showRecaptchaForUserRegistration) {
             return;
         }
 
@@ -128,6 +188,17 @@ class SecuritySubscriber implements SubscriberInterface
 
         $view = $controller->View();
         $view->addTemplateDir($this->path . 'Views');
+
+        if ($this->pluginConfig->showPasswordStrengthForUserRegistration) {
+            $view->extendsTemplate('frontend/plugin/mittwald_security_tools/password_strength/personal_fieldset.tpl');
+        }
+
+        if ($this->pluginConfig->showRecaptchaForUserRegistration) {
+            $view->assign('mittwaldSecurityToolsRecaptchaKey', $this->pluginConfig->recaptchaAPIKey);
+            $view->extendsTemplate('frontend/plugin/mittwald_security_tools/customer_recaptcha/index.tpl');
+        }
+
+
     }
 
     public function addMenuTemplates(\Enlight_Event_EventArgs $args)

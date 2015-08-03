@@ -121,6 +121,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->get('models'),
                 $this->get('db'),
                 $this->get('templatemail'),
+                $this->get('guzzle_http_client_factory'),
+                $this->get('snippets'),
                 $this->Path()
             );
 
@@ -246,6 +248,23 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'label' => 'Passwort-Stärke in Registrierungsformular anzeigen',
             'required' => TRUE
         ));
+
+        $form->setElement('checkbox', 'showRecaptchaForUserRegistration', array(
+            'label' => 'reCAPTCHA in Registrierungsformular anzeigen',
+            'required' => TRUE
+        ));
+
+        $form->setElement('textfield', 'recaptchaAPIKey', array(
+            'label' => 'reCAPTCHA: Websiteschlüssel',
+            'required' => TRUE
+        ));
+
+        $form->setElement('textfield', 'recaptchaSecretKey', array(
+            'label' => 'reCAPTCHA: Geheimer Schlüssel',
+            'required' => TRUE
+        ));
+
+
     }
 
     /**
