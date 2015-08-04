@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Enlight\Event\SubscriberInterface;
 use Shopware\Components\HttpClient\GuzzleFactory;
 use Shopware\Components\Model\ModelManager;
+use Shopware\Components\Theme\LessDefinition;
 use Shopware\CustomModels\MittwaldSecurityTools\FailedLogin;
 use Shopware\Mittwald\SecurityTools\Services\LogService;
 
@@ -57,7 +58,17 @@ class SecuritySubscriber implements SubscriberInterface
     /**
      * @var string
      */
-    protected $path;
+    protected $pluginPath;
+
+    /**
+     * @var string
+     */
+    protected $appPath;
+
+    /**
+     * @var string
+     */
+    protected $docPath;
 
     /**
      * @var \GuzzleHttp\ClientInterface
@@ -84,7 +95,9 @@ class SecuritySubscriber implements SubscriberInterface
      * @param \Shopware_Components_TemplateMail $templateMail
      * @param GuzzleFactory $guzzleFactory
      * @param \Shopware_Components_Snippet_Manager $snippets
-     * @param string $path
+     * @param string $pluginPath
+     * @param string $appPath
+     * @param string $docPath
      */
     public function __construct(\Enlight_Config $pluginConfig,
                                 \Shopware_Components_Config $shopConfig,
@@ -93,7 +106,7 @@ class SecuritySubscriber implements SubscriberInterface
                                 \Shopware_Components_TemplateMail $templateMail,
                                 GuzzleFactory $guzzleFactory,
                                 \Shopware_Components_Snippet_Manager $snippets,
-                                $path)
+                                $pluginPath, $appPath, $docPath)
     {
         $this->pluginConfig = $pluginConfig;
         $this->shopConfig = $shopConfig;
@@ -103,7 +116,9 @@ class SecuritySubscriber implements SubscriberInterface
         $this->db = $db;
         $this->client = $guzzleFactory->createClient();
         $this->snippets = $snippets;
-        $this->path = $path;
+        $this->pluginPath = $pluginPath;
+        $this->appPath = $appPath;
+        $this->docPath = $docPath;
     }
 
 
@@ -117,6 +132,7 @@ class SecuritySubscriber implements SubscriberInterface
         return [
             'Shopware_Modules_Admin_Login_FilterResult' => 'logFailedFELogin',
             'Enlight_Controller_Action_PostDispatch_Backend_Login' => 'logFailedBELogin',
+            'Shopware_CronJob_MittwaldSecurityCheckModifiedCoreFiles' => 'onCoreFilesCheck',
             'Shopware_CronJob_MittwaldSecurityCheckCleanUpFailedLogins' => 'onLogCleanupCron',
             'Shopware_CronJob_MittwaldSecurityCheckFailedLoginNotification' => 'onCheckNotification',
             'Enlight_Controller_Action_PostDispatchSecure_Backend' => 'addMenuTemplates',
@@ -134,9 +150,9 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function onCollectLessFiles()
     {
-        $lessDir = $this->path . '/Views/frontend/_public/src/less/';
+        $lessDir = $this->pluginPath . '/Views/frontend/_public/src/less/';
 
-        $less = new \Shopware\Components\Theme\LessDefinition(
+        $less = new LessDefinition(
             array(),
             array(
                 $lessDir . 'all.less'
@@ -153,11 +169,48 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function onCollectJSFiles()
     {
-        $jsDir = $this->path . '/Views/frontend/_public/src/js/';
+        $jsDir = $this->pluginPath . '/Views/frontend/_public/src/js/';
 
         return new ArrayCollection(array(
             $jsDir . 'jQuery.passwordStrength.js'
         ));
+    }
+
+
+    /**
+     * triggers the shopware file check and sends an email-notification, if any modification was detected
+     *
+     * @param \Enlight_Event_EventArgs $args
+     * @return bool
+     * @throws \Enlight_Exception
+     */
+    public function onCoreFilesCheck(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->mailNotificationForModifiedCoreFiles) {
+            return TRUE;
+        }
+
+        $fileName = $this->appPath . '/Components/Check/Data/Files.md5sums';
+
+
+        if (!is_file($fileName)) {
+            $this->logger->error('CORE-FILES-CHECK', 'checksum file could not be loaded');
+            return FALSE;
+        }
+
+        $list = new \Shopware_Components_Check_File($fileName, $this->docPath, []);
+
+        foreach ($list->toArray() as $file) {
+            if (!$file['result']) {
+                $mail = $this->templateMail->createMail('sMODIFIEDFILES');
+                $mail->addTo($this->shopConfig->get('sMAIL'));
+                $mail->send();
+
+                return true;
+            }
+        }
+
+        return TRUE;
     }
 
     /**
@@ -224,7 +277,7 @@ class SecuritySubscriber implements SubscriberInterface
         $controller = $args->getSubject();
 
         $view = $controller->View();
-        $view->addTemplateDir($this->path . 'Views');
+        $view->addTemplateDir($this->pluginPath . 'Views');
 
         if ($this->pluginConfig->showPasswordStrengthForUserRegistration) {
             $view->extendsTemplate('frontend/plugin/mittwald_security_tools/password_strength/personal_fieldset.tpl');
@@ -251,7 +304,7 @@ class SecuritySubscriber implements SubscriberInterface
         $controller = $args->getSubject();
 
         $view = $controller->View();
-        $view->extendsTemplate($this->path . '/Views/backend/index/header.tpl');
+        $view->extendsTemplate($this->pluginPath . '/Views/backend/index/header.tpl');
     }
 
     /**

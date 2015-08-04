@@ -123,7 +123,9 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->get('templatemail'),
                 $this->get('guzzle_http_client_factory'),
                 $this->get('snippets'),
-                $this->Path()
+                $this->Path(),
+                $this->Application()->AppPath(),
+                Shopware()->DocPath()
             );
 
             $this->Application()->Events()->addSubscriber($subscriber);
@@ -256,14 +258,20 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
         $form->setElement('textfield', 'recaptchaAPIKey', array(
             'label' => 'reCAPTCHA: Websiteschlüssel',
-            'required' => TRUE
+            'required' => TRUE,
+            'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin'
         ));
 
         $form->setElement('textfield', 'recaptchaSecretKey', array(
             'label' => 'reCAPTCHA: Geheimer Schlüssel',
-            'required' => TRUE
+            'required' => TRUE,
+            'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin'
         ));
 
+        $form->setElement('checkbox', 'mailNotificationForModifiedCoreFiles', array(
+            'label' => 'Mail-Notifications für veränderte Core-Dateien aktivieren',
+            'required' => TRUE
+        ));
 
     }
 
@@ -321,7 +329,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     protected function createCronJobs()
     {
-        $this->createCronJob('Security Check', 'MittwaldSecurityCheck');
+        $this->createCronJob('Mail Notifications für modifizierte Core-Dateien', 'MittwaldSecurityCheckModifiedCoreFiles');
         $this->createCronJob('Failed Login Mail Notifications', 'MittwaldSecurityCheckFailedLoginNotification', 3600);
         $this->createCronJob('Failed Login Log aufräumen', 'MittwaldSecurityCheckCleanUpFailedLogins');
     }
@@ -342,6 +350,19 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 EOT;
 
         $this->get('db')->executeUpdate($sql);
+
+
+        $sql = <<<EOT
+                    INSERT INTO `s_core_config_mails`
+                        (`id`, `stateId`, `name`, `frommail`, `fromname`, `subject`, `content`, `contentHTML`,
+                         `ishtml`, `attachment`, `mailtype`, `context`, `dirty`)
+                    VALUES (NULL, NULL, 'sMODIFIEDFILES', '{config name=mail}', '{config name=shopName}',
+                            'Modifizierte Core-Dateien im {config name=shopName}',
+                            '{include file="string:{config name=emailheaderplain}"} \nHallo, \nes wurde eine Modifikation an den überwachten Core-Dateien festgestellt. Dies kann möglicherweise auf einen Angriff hinweisen. Bitte prüfen Sie den Status im Shop-Backend unter "Einstellungen"->"Systeminfo"->"Shopware-Dateien". \n{include file="string:{config name=emailfooterplain}"}',
+                            '', '0', '', '2', '', '0');'
+EOT;
+
+        $this->get('db')->executeUpdate($sql);
     }
 
     /**
@@ -350,7 +371,7 @@ EOT;
     public function removeMailTemplate()
     {
         $sql = 'DELETE FROM `s_core_config_mails`
-                WHERE name = "sFAILEDLOGIN"';
+                WHERE name IN ("sFAILEDLOGIN", "sMODIFIEDFILES")';
 
         $this->get('db')->executeUpdate($sql);
     }
