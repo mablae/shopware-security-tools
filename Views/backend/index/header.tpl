@@ -1,5 +1,6 @@
 {extends file="parent:backend/index/header.tpl"}
 
+{* add our custom icon for the backend menu entry *}
 {block name="backend/base/header/css" append}
     <style>
         .mittwald-custom-icon{

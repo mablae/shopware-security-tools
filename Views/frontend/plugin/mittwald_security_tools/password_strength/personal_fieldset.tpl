@@ -1,5 +1,6 @@
 {extends file="parent:frontend/register/personal_fieldset.tpl"}
 
+{* add the password strength template *}
 {block name="frontend_register_personal_fieldset_password_description" prepend}
     <div class="mwst--register--password--strength">
         {s name="password-strength-header"}Passwortstärke{/s}

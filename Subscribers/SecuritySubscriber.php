@@ -74,6 +74,18 @@ class SecuritySubscriber implements SubscriberInterface
      */
     protected $captchaChecked = FALSE;
 
+    /**
+     * construct the subscriber with all dependencies
+     *
+     * @param \Enlight_Config $pluginConfig
+     * @param \Shopware_Components_Config $shopConfig
+     * @param ModelManager $modelManager
+     * @param \Enlight_Components_Db_Adapter_Pdo_Mysql $db
+     * @param \Shopware_Components_TemplateMail $templateMail
+     * @param GuzzleFactory $guzzleFactory
+     * @param \Shopware_Components_Snippet_Manager $snippets
+     * @param string $path
+     */
     public function __construct(\Enlight_Config $pluginConfig,
                                 \Shopware_Components_Config $shopConfig,
                                 ModelManager $modelManager,
@@ -96,6 +108,8 @@ class SecuritySubscriber implements SubscriberInterface
 
 
     /**
+     * subscribe our events
+     *
      * @return array
      */
     public static function getSubscribedEvents()
@@ -113,6 +127,11 @@ class SecuritySubscriber implements SubscriberInterface
         ];
     }
 
+    /**
+     * add the less sources for our password strength template
+     *
+     * @return ArrayCollection
+     */
     public function onCollectLessFiles()
     {
         $lessDir = $this->path . '/Views/frontend/_public/src/less/';
@@ -127,6 +146,11 @@ class SecuritySubscriber implements SubscriberInterface
         return new ArrayCollection(array($less));
     }
 
+    /**
+     * add the script for our password strength template
+     *
+     * @return ArrayCollection
+     */
     public function onCollectJSFiles()
     {
         $jsDir = $this->path . '/Views/frontend/_public/src/js/';
@@ -136,6 +160,14 @@ class SecuritySubscriber implements SubscriberInterface
         ));
     }
 
+    /**
+     * event listener for Shopware_Modules_Admin_ValidateStep2_FilterResult
+     *
+     * validates the google reCAPTCHA
+     *
+     * @param \Enlight_Event_EventArgs $args
+     * @return array
+     */
     public function recaptchaCheck(\Enlight_Event_EventArgs $args)
     {
 
@@ -175,6 +207,11 @@ class SecuritySubscriber implements SubscriberInterface
         return $return;
     }
 
+    /**
+     * add our frontend templates for password strength and reCAPTCHA if necessary
+     *
+     * @param \Enlight_Event_EventArgs $args
+     */
     public function addTemplates(\Enlight_Event_EventArgs $args)
     {
         if (!$this->pluginConfig->showPasswordStrengthForUserRegistration && !$this->pluginConfig->showRecaptchaForUserRegistration) {
@@ -201,6 +238,11 @@ class SecuritySubscriber implements SubscriberInterface
 
     }
 
+    /**
+     * add our custom backend menu template for our custom icon
+     *
+     * @param \Enlight_Event_EventArgs $args
+     */
     public function addMenuTemplates(\Enlight_Event_EventArgs $args)
     {
         /**
