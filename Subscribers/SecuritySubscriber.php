@@ -5,10 +5,12 @@ namespace Shopware\Mittwald\SecurityTools\Subscribers;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Enlight\Event\SubscriberInterface;
+use Shopware\Components\DependencyInjection\Container;
 use Shopware\Components\HttpClient\GuzzleFactory;
 use Shopware\Components\Model\ModelManager;
 use Shopware\Components\Theme\LessDefinition;
 use Shopware\CustomModels\MittwaldSecurityTools\FailedLogin;
+use Shopware\Mittwald\SecurityTools\Components\MittwaldAuth;
 use Shopware\Mittwald\SecurityTools\Services\LogService;
 
 
@@ -136,11 +138,47 @@ class SecuritySubscriber implements SubscriberInterface
             'Shopware_CronJob_MittwaldSecurityCheckCleanUpFailedLogins' => 'onLogCleanupCron',
             'Shopware_CronJob_MittwaldSecurityCheckFailedLoginNotification' => 'onCheckNotification',
             'Enlight_Controller_Action_PostDispatchSecure_Backend' => 'addMenuTemplates',
+            'Enlight_Controller_Action_PostDispatchSecure_Backend_UserManager' => 'addUserManagerTemplates',
+            'Enlight_Controller_Action_PostDispatchSecure_Backend_Login' => 'addLoginTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addTemplates',
             'Shopware_Modules_Admin_ValidateStep2_FilterResult' => 'recaptchaCheck',
             'Theme_Compiler_Collect_Plugin_Less' => 'onCollectLessFiles',
-            'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles'
+            'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles',
+            'Enlight_Bootstrap_AfterInitResource_Auth' => ['onAfterInitAuth', 999999]
         ];
+    }
+
+    /**
+     * decorates the default auth component
+     *
+     * @param \Enlight_Event_EventArgs $args
+     * @throws \Exception
+     */
+    public function onAfterInitAuth(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->useYubicoAuth) {
+            return;
+        }
+
+        /**
+         * @var Container $subject
+         */
+        $subject = $args->getSubject();
+
+
+        /**
+         * @var \Shopware_Components_Auth $originalAuth
+         */
+        $originalAuth = $subject->get('auth');
+        $auth = MittwaldAuth::getInstance();
+        $auth->init($originalAuth, $this->db, $this->client, $this->logger);
+
+        $subject->set(
+            'auth',
+            $auth
+        );
+
+        return;
     }
 
     /**
@@ -290,6 +328,54 @@ class SecuritySubscriber implements SubscriberInterface
 
 
     }
+
+    /**
+     * add the templates for user manager / otp
+     *
+     * @param \Enlight_Event_EventArgs $args
+     */
+    public function addUserManagerTemplates(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->useYubicoAuth) {
+            return;
+        }
+
+        /**
+         * @var \Enlight_Controller_Action $controller
+         */
+        $controller = $args->getSubject();
+
+        if ($controller->Request()->getActionName() === 'load') {
+            $view = $controller->View();
+            $view->addTemplateDir($this->pluginPath . 'Views');
+            $view->extendsTemplate('backend/mittwald_user_manager/view/user/create.js');
+            $view->extendsTemplate('backend/mittwald_user_manager/model/attribute.js');
+        }
+    }
+
+    /**
+     * add templates for login form / otp
+     *
+     * @param \Enlight_Event_EventArgs $args
+     */
+    public function addLoginTemplates(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->useYubicoAuth) {
+            return;
+        }
+
+        /**
+         * @var \Enlight_Controller_Action $controller
+         */
+        $controller = $args->getSubject();
+
+        if ($controller->Request()->getActionName() === 'load') {
+            $view = $controller->View();
+            $view->addTemplateDir($this->pluginPath . 'Views');
+            $view->extendsTemplate('backend/mittwald_login/view/main/form.js');
+        }
+    }
+
 
     /**
      * add our custom backend menu template for our custom icon

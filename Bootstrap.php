@@ -157,6 +157,19 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             //ignore
         }
         $tool->createSchema($classes);
+
+        $this->Application()->Models()->addAttribute(
+            's_core_auth_attributes',
+            'Mittwald',
+            'YubiKey',
+            'varchar(255)',
+            true,
+            null
+        );
+
+        $this->Application()->Models()->generateAttributeModels(array(
+            's_core_auth_attributes'
+        ));
     }
 
 
@@ -178,6 +191,17 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
         try {
             $tool->dropSchema($classes);
+
+            $this->Application()->Models()->removeAttribute(
+                's_core_auth_attributes',
+                'Mittwald',
+                'YubiKey'
+            );
+
+            $this->Application()->Models()->generateAttributeModels(array(
+                's_core_auth_attributes'
+            ));
+
         } catch (Exception $e) {
             //ignore
         }
@@ -190,6 +214,12 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     protected function createForm()
     {
         $form = $this->Form();
+
+        $form->setElement('checkbox', 'useYubicoAuth', array(
+            'label' => '2-Faktor Authentifizierung über Yubico aktivieren',
+            'required' => TRUE
+        ));
+
         $form->setElement('checkbox', 'logFailedBELogins', array(
             'label' => 'Fehlgeschlagene Backend-Logins loggen',
             'required' => TRUE

@@ -15,7 +15,6 @@ class LogService
 {
 
 
-
     const ERROR_FILE = 'error.log';
 
     const DEBUG_FILE = 'debug.log';
@@ -32,20 +31,19 @@ class LogService
      */
     protected $config;
 
-
-
+    /**
+     * @param \Enlight_Config $config
+     */
     public function __construct(\Enlight_Config $config)
     {
         $this->config = $config;
 
         $this->path = realpath(dirname(__FILE__)) . '/../logs/';
 
-        if (!file_exists($this->path))
-        {
+        if (!file_exists($this->path)) {
             mkdir($this->path);
         }
     }
-
 
 
     /**
@@ -58,19 +56,16 @@ class LogService
     }
 
 
-
     /**
      * @param string $topic
      * @param string $content
      */
     public function debug($topic, $content)
     {
-        if ($this->config->debugMode)
-        {
+        if ($this->config->debugMode) {
             $this->writeLogEntry($topic, $content, self::DEBUG_FILE);
         }
     }
-
 
 
     /**
@@ -80,7 +75,7 @@ class LogService
      */
     protected function writeLogEntry($topic, $content, $file)
     {
-        $now      = new \DateTime();
+        $now = new \DateTime();
         $logEntry = $now->format('Y-m-d H:i:s') . ' - ' . $topic . "\n";
         $logEntry .= $content;
         $logEntry .= "--------------------- \n\n";
