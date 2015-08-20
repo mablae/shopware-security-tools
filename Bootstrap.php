@@ -148,7 +148,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $tool = new \Doctrine\ORM\Tools\SchemaTool($em);
 
         $classes = array(
-            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin')
+            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin'),
+            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\EmergencyPassword')
         );
 
         try {
@@ -186,7 +187,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $tool = new \Doctrine\ORM\Tools\SchemaTool($em);
 
         $classes = array(
-            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin')
+            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\FailedLogin'),
+            $em->getClassMetadata('Shopware\CustomModels\MittwaldSecurityTools\EmergencyPassword')
         );
 
         try {
@@ -303,6 +305,11 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'required' => TRUE
         ));
 
+        $form->setElement('checkbox', 'debugMode', array(
+            'label' => 'Debug-Modus aktivieren',
+            'required' => TRUE
+        ));
+
     }
 
     /**
@@ -337,6 +344,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         $this->registerController('Backend', 'MittwaldSecurityTools');
         $this->registerController('Backend', 'MittwaldFailedLogins');
+        $this->registerController('Backend', 'MittwaldEmergencyPasswords');
     }
 
     /**

@@ -103,7 +103,7 @@ class MittwaldAuth extends Shopware_Components_Auth
                     return $authResult;
                 }
 
-                if ($userKey !== substr($otp, 0, 12) || !$this->validateYubikeyOtp($otp)) {
+                if (!$this->validateEmergencyPassword($otp) && ($userKey !== substr($otp, 0, 12) || !$this->validateYubikeyOtp($otp))) {
                     $this->logger->debug('OTP', 'not valid');
                     $this->clearIdentity();
                     return new Zend_Auth_Result(-3, $authResult->getIdentity(), $authResult->getMessages());
@@ -111,12 +111,46 @@ class MittwaldAuth extends Shopware_Components_Auth
             } catch(\Exception $ex){
                 $this->logger->debug('exception', $ex->getMessage());
                 $this->clearIdentity();
+
                 return new Zend_Auth_Result(-3, $authResult->getIdentity(), $authResult->getMessages());
             }
         }
 
         return $authResult;
     }
+
+    /**
+     * actual validation against emergency passwords database
+     *
+     * @param string $otp
+     * @return bool
+     */
+    protected function validateEmergencyPassword($otp)
+    {
+        $sql = 'SELECT id
+                FROM s_plugin_mittwald_security_yubikey_emergency_passwords
+                WHERE userID = ? AND password = ? AND deleted = 0';
+        $result = $this->db->query($sql, array($this->originalObject->getIdentity()->id, $otp));
+
+        $emergencyPasswordID = intval($result->fetchColumn());
+
+        if($emergencyPasswordID <= 0)
+        {
+            $this->logger->debug('emergency-password', 'invalid');
+            return false;
+        }
+
+
+        $sql = 'UPDATE s_plugin_mittwald_security_yubikey_emergency_passwords
+                SET deleted = 1
+                WHERE id = ?';
+        $this->db->executeUpdate($sql, array($emergencyPasswordID));
+
+        $this->logger->debug('emergency-password', 'success');
+
+        return true;
+    }
+
 
     /**
      * actual validation against yubico cloud

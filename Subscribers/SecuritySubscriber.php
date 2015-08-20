@@ -348,8 +348,11 @@ class SecuritySubscriber implements SubscriberInterface
         if ($controller->Request()->getActionName() === 'load') {
             $view = $controller->View();
             $view->addTemplateDir($this->pluginPath . 'Views');
+            $view->extendsTemplate('backend/mittwald_user_manager/view/emergency_password/grid.js');
             $view->extendsTemplate('backend/mittwald_user_manager/view/user/create.js');
             $view->extendsTemplate('backend/mittwald_user_manager/model/attribute.js');
+            $view->extendsTemplate('backend/mittwald_user_manager/model/emergency_password.js');
+            $view->extendsTemplate('backend/mittwald_user_manager/store/emergency_password.js');
         }
     }
 
