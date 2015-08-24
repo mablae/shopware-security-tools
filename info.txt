@@ -1,0 +1,13 @@
+Machen Sie Shopware noch sicherer! Wir haben in dieses Plugin einige Mechanismen und Tools integriert, die Ihren Shop noch besser vor Viren und Hackern schützen. 
+<br/><br/>
+Die folgenden Funktionen sind im Plugin enthalten und können unabhängig voneinander aktiviert und deaktiviert werden:
+<br/><br/>
+<ul>
+<li>Zwei-Faktor Authentifizierung über YubiKey (Hardware-Token)</li>
+<li>Automatische E-Mail-Benachrichtigung zu sicherheitsrelevanten Vorfällen (fehlgeschlagene Login-Versuche und modifizierte Core-Dateien)</li>
+<li>Allgemeine Sicherheitshinweise</li>
+<li>Google reCaptcha für Kundenregistrierung</li>
+<li>Anzeige zur Passwortsicherheit bei der Kundenregistrierung</li>
+</ul>
+<br/><br/>
+Die Frontend-Features sind für das Shopware Responsive Theme optimiert und nutzen den systeminternen LESS- und JS- Precompiler.
