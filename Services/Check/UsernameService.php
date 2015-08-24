@@ -5,11 +5,29 @@ namespace Shopware\Mittwald\SecurityTools\Services\Check;
 
 /**
  * Class LogService
+ * Checks if any unsafe standard usernames are configured and active
+ *
  * @package Shopware\Mittwald\SecurityTools\Services\Check
  *
- * @author  Philipp Mahlow <p.mahlow@mittwald.de>
  *
- * Checks if any unsafe standard usernames are configured and active
+ * Copyright (C) 2015 Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG
+ *
+ * This plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program (see LICENSE.txt). If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * @author Philipp Mahlow <p.mahlow@mittwald.de>
+ *
  */
 class UsernameService implements CheckServiceInterface
 {
@@ -21,7 +39,8 @@ class UsernameService implements CheckServiceInterface
      */
     protected $badUsernames = [
         'demo',
-        'admin'
+        'admin',
+        'test'
     ];
 
 
@@ -39,6 +58,8 @@ class UsernameService implements CheckServiceInterface
 
 
     /**
+     * inject all needed dependencies
+     *
      * @param \Enlight_Config                          $config
      * @param \Enlight_Components_Db_Adapter_Pdo_Mysql $db
      */
@@ -51,6 +72,8 @@ class UsernameService implements CheckServiceInterface
 
 
     /**
+     * do the actual check
+     *
      * @return array
      * @throws \Zend_Db_Statement_Exception
      */

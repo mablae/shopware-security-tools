@@ -5,15 +5,31 @@ namespace Shopware\Mittwald\SecurityTools\Services;
 
 /**
  * Class LogService
- * @package Shopware\Mittwald\SecurityTools\Services
- *
- * @author  Philipp Mahlow <p.mahlow@mittwald.de>
- *
  * Writes log files
+ *
+ * @package Shopware\Mittwald\SecurityTools\Services *
+ *
+ * Copyright (C) 2015 Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG
+ *
+ * This plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program (see LICENSE.txt). If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * @author Philipp Mahlow <p.mahlow@mittwald.de>
+ *
  */
 class LogService
 {
-
 
     const ERROR_FILE = 'error.log';
 
@@ -32,6 +48,8 @@ class LogService
     protected $config;
 
     /**
+     * initialize the logger. create the logs folder and inject config
+     *
      * @param \Enlight_Config $config
      */
     public function __construct(\Enlight_Config $config)
@@ -47,6 +65,8 @@ class LogService
 
 
     /**
+     * log for error messages
+     *
      * @param string $topic
      * @param string $content
      */
@@ -57,6 +77,8 @@ class LogService
 
 
     /**
+     * log for debug messages. calls will be ignored, if debugMode is not active.
+     *
      * @param string $topic
      * @param string $content
      */
@@ -69,6 +91,8 @@ class LogService
 
 
     /**
+     * internal function. writes the actual log entry.
+     *
      * @param string $topic
      * @param string $content
      * @param string $file

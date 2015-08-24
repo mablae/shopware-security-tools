@@ -3,6 +3,23 @@
  * decorator class for auth component
  * validates otp against yubico cloud
  *
+ *
+ * Copyright (C) 2015 Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG
+ *
+ * This plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program (see LICENSE.txt). If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
  * @author Philipp Mahlow <p.mahlow@mittwald.de>
  *
  */
@@ -46,7 +63,7 @@ class MittwaldAuth extends Shopware_Components_Auth
      */
     public static function getInstance()
     {
-        if (null === self::$_instance || !self::$_instance instanceof self) {
+        if (NULL === self::$_instance || !self::$_instance instanceof self) {
             self::$_instance = new self();
         }
 
@@ -54,7 +71,7 @@ class MittwaldAuth extends Shopware_Components_Auth
     }
 
     /**
-     * custom init method. we need some
+     * custom init method. inject all the dependencies
      *
      * @param Shopware_Components_Auth $originalObject
      * @param Enlight_Components_Db_Adapter_Pdo_Mysql $db
@@ -85,11 +102,14 @@ class MittwaldAuth extends Shopware_Components_Auth
      */
     public function login($username, $password)
     {
+        //check username password combination
         $authResult = $this->originalObject->login($username, $password);
 
+        //do the other checks, if result is positive
         if ($authResult->isValid()) {
             $request = Shopware()->Front()->Request();
 
+            //get otp param
             $otp = $request->getParam('yubikey');
 
             try {
@@ -98,17 +118,21 @@ class MittwaldAuth extends Shopware_Components_Auth
 
                 $userKey = $result->fetchColumn();
 
+                //there is no connected yubikey for this user. just return the original result.
                 if (!isset($userKey) || strlen($userKey) == 0) {
                     $this->logger->debug('OTP', 'userkey is empty');
                     return $authResult;
                 }
 
+                //if the given token is not an emergency password or token is not valid anyway
                 if (!$this->validateEmergencyPassword($otp) && ($userKey !== substr($otp, 0, 12) || !$this->validateYubikeyOtp($otp))) {
                     $this->logger->debug('OTP', 'not valid');
+                    //login is not valid. return negative result.
                     $this->clearIdentity();
                     return new Zend_Auth_Result(-3, $authResult->getIdentity(), $authResult->getMessages());
                 }
-            } catch(\Exception $ex){
+            } catch (\Exception $ex) {
+                //something has gone wrong. return negative result.
                 $this->logger->debug('exception', $ex->getMessage());
                 $this->clearIdentity();
 
@@ -134,10 +158,9 @@ class MittwaldAuth extends Shopware_Components_Auth
 
         $emergencyPasswordID = intval($result->fetchColumn());
 
-        if($emergencyPasswordID <= 0)
-        {
+        if ($emergencyPasswordID <= 0) {
             $this->logger->debug('emergency-password', 'invalid');
-            return false;
+            return FALSE;
         }
 
 
@@ -148,7 +171,7 @@ class MittwaldAuth extends Shopware_Components_Auth
 
         $this->logger->debug('emergency-password', 'success');
 
-        return true;
+        return TRUE;
     }
 
 
@@ -160,6 +183,7 @@ class MittwaldAuth extends Shopware_Components_Auth
      */
     protected function validateYubikeyOtp($otp)
     {
+        //all available yubico cloud servers
         $server_queue = array(
             'api.yubico.com',
             'api2.yubico.com',
@@ -169,6 +193,7 @@ class MittwaldAuth extends Shopware_Components_Auth
         );
         shuffle($server_queue);
 
+        //generate unique token
         $nonce = md5(uniqid(rand()));
         $params = http_build_query([
             'id' => 1,
@@ -180,6 +205,7 @@ class MittwaldAuth extends Shopware_Components_Auth
 
         $response = NULL;
 
+        //try to get an result from at least one of the cloud servers
         while (!empty($server_queue)) {
             $this->logger->debug('OTP', 'check server');
             $server = array_shift($server_queue);
@@ -188,8 +214,10 @@ class MittwaldAuth extends Shopware_Components_Auth
             try {
                 $response = $this->httpClient->get($uri);
                 if (!empty($response)) {
+                    // one server responded. we can succeed do our verification
                     break;
                 } else {
+                    // something gone wrong. try next server.
                     continue;
                 }
             } catch (\Exception $ex) {
@@ -200,7 +228,7 @@ class MittwaldAuth extends Shopware_Components_Auth
 
         // No server replied; we can't validate this OTP
         if (empty($response)) {
-            return false;
+            return FALSE;
         }
 
         // Parse response
@@ -216,21 +244,21 @@ class MittwaldAuth extends Shopware_Components_Auth
         }
         // Validate the response - We need an OK message reply
         if ($data['status'] != 'OK') {
-            return false;
+            return FALSE;
         }
         // Validate the response - We need a confidence level over 50%
         if ($data['sl'] < 50) {
-            return false;
+            return FALSE;
         }
         // Validate the response - The OTP must match
         if ($data['otp'] != $otp) {
-            return false;
+            return FALSE;
         }
         // Validate the response - The token must match
         if ($data['nonce'] != $nonce) {
-            return false;
+            return FALSE;
         }
-        return true;
+        return TRUE;
     }
 
     /*
@@ -261,7 +289,7 @@ class MittwaldAuth extends Shopware_Components_Auth
     }
 
     /**
-     * Returns true if and only if an identity is available from storage
+     * Returns TRUE if and only if an identity is available from storage
      *
      * @return boolean
      */
@@ -271,9 +299,9 @@ class MittwaldAuth extends Shopware_Components_Auth
     }
 
     /**
-     * Returns the identity from storage or null if no identity is available
+     * Returns the identity from storage or NULL if no identity is available
      *
-     * @return mixed|null
+     * @return mixed|NULL
      */
     public function getIdentity()
     {
@@ -293,10 +321,10 @@ class MittwaldAuth extends Shopware_Components_Auth
     /**
      * Get all adapters or certain one
      *
-     * @param null $index
+     * @param NULL $index
      * @return array|Zend_Auth_Adapter_Interface
      */
-    public function getAdapter($index = null)
+    public function getAdapter($index = NULL)
     {
         return $this->originalObject->getAdapter($index);
     }
@@ -335,10 +363,10 @@ class MittwaldAuth extends Shopware_Components_Auth
     /**
      * Do a authentication approve with a defined adapter
      *
-     * @param null|Zend_Auth_Adapter_Interface $adapter
+     * @param NULL|Zend_Auth_Adapter_Interface $adapter
      * @return Zend_Auth_Result
      */
-    public function authenticate(Zend_Auth_Adapter_Interface $adapter = null)
+    public function authenticate(Zend_Auth_Adapter_Interface $adapter = NULL)
     {
         return $this->originalObject->authenticate($adapter);
     }
@@ -346,10 +374,10 @@ class MittwaldAuth extends Shopware_Components_Auth
     /**
      * Refresh authentication - for example expire date -
      *
-     * @param null|Zend_Auth_Adapter_Interface $adapter
+     * @param NULL|Zend_Auth_Adapter_Interface $adapter
      * @return mixed
      */
-    public function refresh(Zend_Auth_Adapter_Interface $adapter = null)
+    public function refresh(Zend_Auth_Adapter_Interface $adapter = NULL)
     {
         return $this->originalObject->refresh($adapter);
     }

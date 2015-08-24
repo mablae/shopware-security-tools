@@ -5,11 +5,28 @@ namespace Shopware\Mittwald\SecurityTools\Services\Check;
 
 /**
  * Class LogService
+ * Checks if SSL is enabled
+ *
  * @package Shopware\Mittwald\SecurityTools\Services\Check
  *
- * @author  Philipp Mahlow <p.mahlow@mittwald.de>
+ * Copyright (C) 2015 Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG
  *
- * Checks if SSL is enabled
+ * This plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program (see LICENSE.txt). If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * @author Philipp Mahlow <p.mahlow@mittwald.de>
+ *
  */
 class SslService implements CheckServiceInterface
 {
@@ -30,6 +47,8 @@ class SslService implements CheckServiceInterface
 
 
     /**
+     * inject all needed dependencies
+     *
      * @param \Enlight_Config                          $config
      * @param \Enlight_Components_Db_Adapter_Pdo_Mysql $db
      */
@@ -42,6 +61,8 @@ class SslService implements CheckServiceInterface
 
 
     /**
+     * do the actual check
+     *
      * @return array
      * @throws \Zend_Db_Statement_Exception
      */

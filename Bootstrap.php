@@ -1,14 +1,29 @@
 <?php
 
-
 /**
  * Class Shopware_Plugins_Frontend_MittwaldSecurityTools_Bootstrap
+ *
+ * 
+ * Copyright (C) 2015 Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG
+ * 
+ * This plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program (see LICENSE.txt). If not, see <http://www.gnu.org/licenses/>.
+ *
  *
  * @author Philipp Mahlow <p.mahlow@mittwald.de>
  */
 class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Components_Plugin_Bootstrap
-{
-
+{    
 
     /**
      * @var bool
@@ -41,11 +56,12 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         return array(
             'version' => $this->getVersion(),
-            'copyright' => 'Copyright (c) 2015, Mittwald CM-Service GmbH & Co.KG',
+            'copyright' => 'Copyright (c) 2015, Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG',
             'label' => $this->getLabel(),
             'description' => file_get_contents($this->Path() . 'info.txt'),
             'link' => 'http://www.mittwald.de',
-            'author' => 'Philipp Mahlow | Mittwald CM-Service GmbH & Co.KG'
+            'author' => 'Philipp Mahlow | Mittwald CM-Service GmbH & Co.KG',
+            'license' => 'GPL v3'
         );
     }
 
@@ -111,6 +127,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
 
 
     /**
+     * remove db-stuff and mail templates on uninstall.
      *
      * @return bool
      */
@@ -198,8 +215,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'Mittwald',
             'YubiKey',
             'varchar(255)',
-            true,
-            null
+            TRUE,
+            NULL
         );
 
         $this->Application()->Models()->generateAttributeModels(array(

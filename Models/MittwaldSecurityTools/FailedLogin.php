@@ -7,6 +7,25 @@ use Shopware\Components\Model\ModelEntity;
 /**
  * @ORM\Entity
  * @ORM\Table(name="s_plugin_mittwald_security_failed_logins")
+ *
+ * Copyright (C) 2015 Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG
+ *
+ * This plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program (see LICENSE.txt). If not, see <http://www.gnu.org/licenses/>.
+ *
+ *
+ * @author Philipp Mahlow <p.mahlow@mittwald.de>
+ *
  */
 class FailedLogin extends ModelEntity
 {
@@ -14,7 +33,7 @@ class FailedLogin extends ModelEntity
 
 
     /**
-     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\Column(name="id", type="integer", NULLable=FALSE)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      * @var int
@@ -23,28 +42,28 @@ class FailedLogin extends ModelEntity
 
 
     /**
-     * @ORM\Column(name="username", type="string", nullable=false)
+     * @ORM\Column(name="username", type="string", NULLable=FALSE)
      * @var string
      */
     private $username;
 
 
     /**
-     * @ORM\Column(name="ip", type="string", nullable=false)
+     * @ORM\Column(name="ip", type="string", NULLable=FALSE)
      * @var string
      */
     private $ip;
 
 
     /**
-     * @ORM\Column(name="created", type="datetime", nullable=false)
+     * @ORM\Column(name="created", type="datetime", NULLable=FALSE)
      * @var \DateTime
      */
     private $created;
 
 
     /**
-     * @ORM\Column(name="isBackend", type="boolean", nullable=false)
+     * @ORM\Column(name="isBackend", type="boolean", NULLable=FALSE)
      * @var boolean
      */
     private $isBackend;
