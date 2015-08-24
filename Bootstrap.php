@@ -75,6 +75,40 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         }
     }
 
+    /**
+     * Enable plugin method
+     *
+     * @return bool
+     */
+    public function enable()
+    {
+        return array(
+            'success' => TRUE,
+            'invalidateCache' => array(
+                'backend',
+                'theme',
+                'template'
+            )
+        );
+    }
+
+    /**
+     * Disable plugin method
+     *
+     * @return bool
+     */
+    public function disable()
+    {
+        return array(
+            'success' => TRUE,
+            'invalidateCache' => array(
+                'backend',
+                'theme',
+                'template'
+            )
+        );
+    }
+
 
     /**
      *

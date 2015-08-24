@@ -87,6 +87,7 @@ class SecuritySubscriber implements SubscriberInterface
      */
     protected $captchaChecked = FALSE;
 
+
     /**
      * construct the subscriber with all dependencies
      *
@@ -147,6 +148,8 @@ class SecuritySubscriber implements SubscriberInterface
             'Enlight_Bootstrap_AfterInitResource_Auth' => ['onAfterInitAuth', 999999]
         ];
     }
+
+
 
     /**
      * decorates the default auth component
@@ -363,10 +366,6 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function addLoginTemplates(\Enlight_Event_EventArgs $args)
     {
-        if (!$this->pluginConfig->useYubicoAuth) {
-            return;
-        }
-
         /**
          * @var \Enlight_Controller_Action $controller
          */
@@ -374,6 +373,7 @@ class SecuritySubscriber implements SubscriberInterface
 
         if ($controller->Request()->getActionName() === 'load') {
             $view = $controller->View();
+            $view->assign('MittwaldSecurityToolsUseYubikeyAuth', $this->pluginConfig->useYubicoAuth);
             $view->addTemplateDir($this->pluginPath . 'Views');
             $view->extendsTemplate('backend/mittwald_login/view/main/form.js');
         }

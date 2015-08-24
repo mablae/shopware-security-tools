@@ -8,14 +8,19 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.main.Form', {
         var me = this;
         me.callParent(arguments);
 
-        me.otpField = Ext.create('Ext.form.field.Text', {
-            inputType: 'password',
-            name: 'yubikey',
-            allowBlank: true,
-            emptyText: '{s name=field/otp}One Time Password{/s}'
-        });
+        //{if $MittwaldSecurityToolsUseYubikeyAuth}
 
-        me.items.insert(3,me.otpField);
+            me.otpField = Ext.create('Ext.form.field.Text', {
+                inputType: 'password',
+                name: 'yubikey',
+                allowBlank: true,
+                emptyText: '{s name=field/otp}One Time Password{/s}'
+            });
+
+            me.items.insert(3,me.otpField);
+
+        //{/if}
+
     }
 });
 //{/block}
