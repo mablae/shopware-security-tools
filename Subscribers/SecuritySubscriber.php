@@ -168,7 +168,6 @@ class SecuritySubscriber implements SubscriberInterface
     }
 
 
-
     /**
      * decorates the default auth component
      *

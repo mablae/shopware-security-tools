@@ -98,8 +98,7 @@ class Shopware_Controllers_Backend_MittwaldEmergencyPasswords extends Shopware_C
 
 
         if ($user !== NULL) {
-            foreach($data as $entry)
-            {
+            foreach ($data as $entry) {
                 fputcsv($fp, array(
                     $user->getUsername(),
                     $entry->getPassword()

@@ -33,7 +33,6 @@ class UsernameService implements CheckServiceInterface
 {
 
 
-
     /**
      * @var array
      */
@@ -56,19 +55,17 @@ class UsernameService implements CheckServiceInterface
     protected $db;
 
 
-
     /**
      * inject all needed dependencies
      *
-     * @param \Enlight_Config                          $config
+     * @param \Enlight_Config $config
      * @param \Enlight_Components_Db_Adapter_Pdo_Mysql $db
      */
     public function __construct(\Enlight_Config $config, \Enlight_Components_Db_Adapter_Pdo_Mysql $db)
     {
         $this->config = $config;
-        $this->db     = $db;
+        $this->db = $db;
     }
-
 
 
     /**
@@ -80,24 +77,21 @@ class UsernameService implements CheckServiceInterface
     public function getResult()
     {
         $sql = "SELECT username FROM s_core_auth WHERE (active = 1) AND (1=0";
-        for ($i = 0; $i < count($this->badUsernames); $i++)
-        {
+        for ($i = 0; $i < count($this->badUsernames); $i++) {
             $sql .= " OR username = ?";
         }
 
         $sql .= ")";
 
-        $result    = $this->db->query($sql, $this->badUsernames);
+        $result = $this->db->query($sql, $this->badUsernames);
         $usernames = $result->fetchAll();
 
         $return = [];
-        if (count($usernames) > 0)
-        {
-            foreach ($usernames as $username)
-            {
+        if (count($usernames) > 0) {
+            foreach ($usernames as $username) {
                 $return[] = [
                     'reason' => 'badUsername',
-                    'value'  => $username['username']
+                    'value' => $username['username']
                 ];
             }
         }

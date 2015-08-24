@@ -31,7 +31,6 @@ class FailedLogin extends ModelEntity
 {
 
 
-
     /**
      * @ORM\Column(name="id", type="integer", NULLable=FALSE)
      * @ORM\Id
@@ -69,7 +68,6 @@ class FailedLogin extends ModelEntity
     private $isBackend;
 
 
-
     /**
      * @return int
      */
@@ -77,7 +75,6 @@ class FailedLogin extends ModelEntity
     {
         return $this->id;
     }
-
 
 
     /**
@@ -89,7 +86,6 @@ class FailedLogin extends ModelEntity
     }
 
 
-
     /**
      * @return string
      */
@@ -97,7 +93,6 @@ class FailedLogin extends ModelEntity
     {
         return $this->username;
     }
-
 
 
     /**
@@ -109,7 +104,6 @@ class FailedLogin extends ModelEntity
     }
 
 
-
     /**
      * @param string $ip
      */
@@ -117,7 +111,6 @@ class FailedLogin extends ModelEntity
     {
         $this->ip = $ip;
     }
-
 
 
     /**
@@ -129,7 +122,6 @@ class FailedLogin extends ModelEntity
     }
 
 
-
     /**
      * @param \DateTime $created
      */
@@ -139,7 +131,6 @@ class FailedLogin extends ModelEntity
     }
 
 
-
     /**
      * @return boolean
      */
@@ -147,7 +138,6 @@ class FailedLogin extends ModelEntity
     {
         return $this->isBackend;
     }
-
 
 
     /**

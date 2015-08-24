@@ -32,7 +32,6 @@ class SslService implements CheckServiceInterface
 {
 
 
-
     /**
      * @var \Enlight_Config
      */
@@ -45,19 +44,17 @@ class SslService implements CheckServiceInterface
     protected $db;
 
 
-
     /**
      * inject all needed dependencies
      *
-     * @param \Enlight_Config                          $config
+     * @param \Enlight_Config $config
      * @param \Enlight_Components_Db_Adapter_Pdo_Mysql $db
      */
     public function __construct(\Enlight_Config $config, \Enlight_Components_Db_Adapter_Pdo_Mysql $db)
     {
         $this->config = $config;
-        $this->db     = $db;
+        $this->db = $db;
     }
-
 
 
     /**
@@ -70,17 +67,15 @@ class SslService implements CheckServiceInterface
     {
         $sql = "SELECT `name` FROM s_core_shops WHERE active = 1 AND secure = 0 AND host IS NOT NULL";
 
-        $result    = $this->db->query($sql, $this->badUsernames);
+        $result = $this->db->query($sql, $this->badUsernames);
         $shopnames = $result->fetchAll();
 
         $return = [];
-        if (count($shopnames) > 0)
-        {
-            foreach ($shopnames as $shopname)
-            {
+        if (count($shopnames) > 0) {
+            foreach ($shopnames as $shopname) {
                 $return[] = [
                     'reason' => 'noSSL',
-                    'value'  => $shopname['name']
+                    'value' => $shopname['name']
                 ];
             }
         }

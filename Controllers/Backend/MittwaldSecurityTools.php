@@ -28,7 +28,6 @@ class Shopware_Controllers_Backend_MittwaldSecurityTools extends Shopware_Contro
 {
 
 
-
     /**
      * @var \Shopware\Mittwald\SecurityTools\Services\Check\UsernameService
      */
@@ -58,12 +57,12 @@ class Shopware_Controllers_Backend_MittwaldSecurityTools extends Shopware_Contro
      */
     public function init()
     {
-        $this->config          = Shopware()->Plugins()->Core()->MittwaldSecurityTools()->Config();
-        $this->db              = Shopware()->Db();
+        $this->config = Shopware()->Plugins()->Core()->MittwaldSecurityTools()->Config();
+        $this->db = Shopware()->Db();
         $this->usernameService = new \Shopware\Mittwald\SecurityTools\Services\Check\UsernameService($this->config,
-                                                                                                     $this->db);
-        $this->sslService      = new \Shopware\Mittwald\SecurityTools\Services\Check\SslService($this->config,
-                                                                                                $this->db);
+            $this->db);
+        $this->sslService = new \Shopware\Mittwald\SecurityTools\Services\Check\SslService($this->config,
+            $this->db);
 
         parent::init();
     }
@@ -79,8 +78,7 @@ class Shopware_Controllers_Backend_MittwaldSecurityTools extends Shopware_Contro
             $this->sslService->getResult()
         );
 
-        foreach ($results as $key => $result)
-        {
+        foreach ($results as $key => $result) {
             $results[$key]['id'] = ($key + 1);
         }
 

@@ -29,7 +29,6 @@ interface CheckServiceInterface
 {
 
 
-
     /**
      * @return array
      */
