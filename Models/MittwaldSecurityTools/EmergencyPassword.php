@@ -32,7 +32,7 @@ class EmergencyPassword extends ModelEntity
 
 
     /**
-     * @ORM\Column(name="id", type="integer", NULLable=FALSE)
+     * @ORM\Column(name="id", type="integer", nullable=FALSE)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      * @var int
@@ -49,20 +49,20 @@ class EmergencyPassword extends ModelEntity
 
 
     /**
-     * @ORM\Column(name="created", type="datetime", NULLable=FALSE)
+     * @ORM\Column(name="created", type="datetime", nullable=FALSE)
      * @var \DateTime
      */
     private $created;
 
 
     /**
-     * @ORM\Column(name="deleted", type="boolean", NULLable=FALSE)
+     * @ORM\Column(name="deleted", type="boolean", nullable=FALSE)
      * @var boolean
      */
     private $isUsed;
 
     /**
-     * @ORM\Column(name="password", type="string", NULLable=FALSE)
+     * @ORM\Column(name="password", type="string", nullable=FALSE)
      * @var string
      */
     private $password;
