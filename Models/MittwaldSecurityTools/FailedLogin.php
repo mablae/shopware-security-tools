@@ -32,7 +32,7 @@ class FailedLogin extends ModelEntity
 
 
     /**
-     * @ORM\Column(name="id", type="integer", NULLable=FALSE)
+     * @ORM\Column(name="id", type="integer", nullable=FALSE)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      * @var int
@@ -41,28 +41,28 @@ class FailedLogin extends ModelEntity
 
 
     /**
-     * @ORM\Column(name="username", type="string", NULLable=FALSE)
+     * @ORM\Column(name="username", type="string", nullable=FALSE)
      * @var string
      */
     private $username;
 
 
     /**
-     * @ORM\Column(name="ip", type="string", NULLable=FALSE)
+     * @ORM\Column(name="ip", type="string", nullable=FALSE)
      * @var string
      */
     private $ip;
 
 
     /**
-     * @ORM\Column(name="created", type="datetime", NULLable=FALSE)
+     * @ORM\Column(name="created", type="datetime", nullable=FALSE)
      * @var \DateTime
      */
     private $created;
 
 
     /**
-     * @ORM\Column(name="isBackend", type="boolean", NULLable=FALSE)
+     * @ORM\Column(name="isBackend", type="boolean", nullable=FALSE)
      * @var boolean
      */
     private $isBackend;
