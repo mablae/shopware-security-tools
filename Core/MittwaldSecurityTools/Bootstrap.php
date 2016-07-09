@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.0.0";
+        return "1.1.0";
     }
 
 
@@ -88,6 +88,31 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 'success' => FALSE,
                 'message' => $ex->getMessage()
             ];
+        }
+    }
+
+    /**
+     * the update routine
+     *
+     * @param string $version
+     * @return bool
+     */
+    public function update($version)
+    {
+        try {
+            if ($version == '1.0.0') {
+                //rename attribute field
+                Shopware()->Db()->exec('ALTER TABLE `s_core_auth_attributes` CHANGE `Mittwald_Yubikey` `mittwald_yubikey` VARCHAR(500) CHARACTER SET utf8 COLLATE utf8_unicode_ci NULL DEFAULT NULL;');
+
+                /**
+                 * @var \Shopware\Bundle\AttributeBundle\Service\CrudService $service
+                 */
+                $service = $this->get('shopware_attribute.crud_service');
+                $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
+            }
+            return TRUE;
+        } catch (Exception $ex) {
+            return FALSE;
         }
     }
 
@@ -210,18 +235,12 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         }
         $tool->createSchema($classes);
 
-        $this->Application()->Models()->addAttribute(
-            's_core_auth_attributes',
-            'Mittwald',
-            'YubiKey',
-            'varchar(255)',
-            TRUE,
-            NULL
-        );
 
-        $this->Application()->Models()->generateAttributeModels(array(
-            's_core_auth_attributes'
-        ));
+        /**
+         * @var \Shopware\Bundle\AttributeBundle\Service\CrudService $service
+         */
+        $service = $this->get('shopware_attribute.crud_service');
+        $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
     }
 
 
@@ -245,15 +264,11 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         try {
             $tool->dropSchema($classes);
 
-            $this->Application()->Models()->removeAttribute(
-                's_core_auth_attributes',
-                'Mittwald',
-                'YubiKey'
-            );
-
-            $this->Application()->Models()->generateAttributeModels(array(
-                's_core_auth_attributes'
-            ));
+            /**
+             * @var \Shopware\Bundle\AttributeBundle\Service\CrudService $service
+             */
+            $service = $this->get('shopware_attribute.crud_service');
+            $service->delete('s_core_auth_attributes', 'Mittwald_YubiKey', true);
 
         } catch (Exception $e) {
             //ignore
@@ -409,7 +424,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'class' => 'mittwald-custom-icon',
             'action' => 'Index',
             'active' => 1,
-            'parent' => $this->Menu()->findOneBy('label', 'Einstellungen')
+            'parent' => $this->Menu()->findOneBy(array('label' => 'Einstellungen'))
         ));
     }
 
