@@ -31,38 +31,63 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.user.Create', {
     getUserTab: function () {
         var me = this;
         var tabPanel = me.callParent(arguments);
-        var attributeModel = me.record.getAttributes().getAt(0);
 
-        //create an empty attribute model if necessary
+        Ext.Ajax.request({
+            url: '{url controller=AttributeData action=loadData}',
+            params: {
+                _foreignKey: me.record.get('id'),
+                _table: 's_core_auth_attributes'
+            },
+            success: function(responseData, request) {
+                var response = Ext.JSON.decode(responseData.responseText);
 
-        if (!attributeModel) {
-            attributeModel = Ext.create('Shopware.apps.UserManager.model.Attribute');
-            attributeModel.set('userID', me.record.get('id'));
-            me.record.getAttributes().add(attributeModel);
-        }
+                me.attributeForm = Ext.create('Shopware.attribute.Form', {
+                    table: 's_core_auth_attributes'
+                });
 
-        //add our new tab...
+                me.attributeForm.loadAttribute(me.record.get('id'), function(){
 
-        tabPanel.add(
-            me.getYubikeyTab(attributeModel)
-        );
+                    me.yubikeyField = Ext.create('Ext.form.field.Text', {
+                        fieldLabel: 'YubiKey Secret'
+                    });
+
+                    me.yubikeyField.setValue((
+                        response.data['__attribute_mittwald_yubikey'] ?
+                            response.data['__attribute_mittwald_yubikey'] : ''));
+
+                    me.hiddenYubikeyField = Ext.create('Ext.form.field.Hidden', {
+                        xtype: 'hidden',
+                        name: '__attribute_mittwald_yubikey'
+                    });
+
+                    me.hiddenYubikeyField.setValue(me.yubikeyField.getValue());
+
+                    me.attributeForm.add(me.hiddenYubikeyField);
+
+                    //add our new tab...
+                    tabPanel.add(
+                        me.getYubikeyTab()
+                    );
+                });
+
+            }
+        });
+
 
         //... and inject the new yubikey secret to the attribute field if necessary
         me.on({
             'saveUser': function (record, formPanel) {
                 if (me.yubikeyField.getValue() && me.yubikeyField.getValue().length > 24) {
-                    attributeModel.set('mittwaldYubiKey', me.yubikeyField.getValue().substring(0, 12));
+                    me.hiddenYubikeyField.setValue(me.yubikeyField.getValue());
+                    me.attributeForm.saveAttribute(me.record.get('id'));
                 }
             }
         });
 
         return tabPanel;
     },
-    getYubikeyTab: function (attributeModel) {
+    getYubikeyTab: function (value) {
         var me = this;
-        me.yubikeyField = Ext.create('Ext.form.field.Text', {
-            fieldLabel: 'YubiKey Secret'
-        });
 
         return Ext.create('Ext.panel.Panel', {
             title: '2-Faktor Authentifizierung',
@@ -78,7 +103,7 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.user.Create', {
                         },
                         items: [
                             Ext.create('Ext.form.Label', {
-                                html: me.getYubikeyText(attributeModel)
+                                html: me.getYubikeyText(me.yubikeyField.getValue())
                             }),
                             me.yubikeyField
                         ]
@@ -99,12 +124,12 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.user.Create', {
 
         return me.emergencyPasswordStore;
     },
-    getYubikeyText: function(attributeModel){
+    getYubikeyText: function(yubikeyValue){
         var me = this;
 
         var text = 'Es ist ';
 
-        if(attributeModel.get('mittwaldYubiKey'))
+        if(yubikeyValue)
         {
             text += 'bereits ein YubiKey zugeordnet. <br/><br/>';
         }
