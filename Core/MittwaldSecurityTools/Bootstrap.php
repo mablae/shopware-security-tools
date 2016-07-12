@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.0.0";
+        return "1.0.1";
     }
 
 
@@ -174,6 +174,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->get('templatemail'),
                 $this->get('guzzle_http_client_factory'),
                 $this->get('snippets'),
+                Shopware()->Modules()->Admin(),
                 $this->Path(),
                 $this->Application()->AppPath(),
                 Shopware()->DocPath()

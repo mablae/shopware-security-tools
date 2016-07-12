@@ -101,6 +101,11 @@ class SecuritySubscriber implements SubscriberInterface
     protected $snippets;
 
     /**
+     * @var \sAdmin
+     */
+    protected $sAdmin;
+    
+    /**
      * @var bool
      */
     protected $captchaChecked = FALSE;
@@ -116,6 +121,7 @@ class SecuritySubscriber implements SubscriberInterface
      * @param \Shopware_Components_TemplateMail $templateMail
      * @param GuzzleFactory $guzzleFactory
      * @param \Shopware_Components_Snippet_Manager $snippets
+     * @param \sAdmin $sAdmin
      * @param string $pluginPath
      * @param string $appPath
      * @param string $docPath
@@ -127,6 +133,7 @@ class SecuritySubscriber implements SubscriberInterface
                                 \Shopware_Components_TemplateMail $templateMail,
                                 GuzzleFactory $guzzleFactory,
                                 \Shopware_Components_Snippet_Manager $snippets,
+                                \sAdmin $sAdmin,
                                 $pluginPath, $appPath, $docPath)
     {
         $this->pluginConfig = $pluginConfig;
@@ -137,6 +144,7 @@ class SecuritySubscriber implements SubscriberInterface
         $this->db = $db;
         $this->client = $guzzleFactory->createClient();
         $this->snippets = $snippets;
+        $this->sAdmin = $sAdmin;
         $this->pluginPath = $pluginPath;
         $this->appPath = $appPath;
         $this->docPath = $docPath;
@@ -284,7 +292,7 @@ class SecuritySubscriber implements SubscriberInterface
 
         $return = $args->getReturn();
 
-        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked) {
+        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked || $this->sAdmin->sCheckUser()) {
             return $return;
         }
 
