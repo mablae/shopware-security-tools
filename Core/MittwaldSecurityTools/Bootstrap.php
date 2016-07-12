@@ -56,7 +56,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         return array(
             'version' => $this->getVersion(),
-            'copyright' => 'Copyright (c) 2015, Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG',
+            'copyright' => 'Copyright (c) 2016, Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG',
             'label' => $this->getLabel(),
             'description' => file_get_contents($this->Path() . 'info.txt'),
             'link' => 'http://www.mittwald.de',

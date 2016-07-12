@@ -16,7 +16,11 @@ Die Frontend-Features sind für das Shopware Responsive Theme optimiert und nutz
 
 ## Systemvoraussetzungen
 
-* Shopware Version > 5.0.0
+* Shopware Version > 5.2.0
+
+## Plugin-Version für Shopware 5.0 und 5.1
+
+Diese Version des Plugins ist ab Shopware 5.2.0 lauffähig. Im Branch 5.1 findest Du die aktuelle Version für Shopware 5.0 und 5.1
 
 ## Installation
 
