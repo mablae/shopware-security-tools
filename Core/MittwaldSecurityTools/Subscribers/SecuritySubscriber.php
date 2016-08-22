@@ -133,8 +133,10 @@ class SecuritySubscriber implements SubscriberInterface
                                 \Shopware_Components_TemplateMail $templateMail,
                                 GuzzleFactory $guzzleFactory,
                                 \Shopware_Components_Snippet_Manager $snippets,
-                                \sAdmin $sAdmin,
-                                $pluginPath, $appPath, $docPath)
+                                $pluginPath,
+                                $appPath,
+                                $docPath,
+                                \sAdmin $sAdmin = NULL)
     {
         $this->pluginConfig = $pluginConfig;
         $this->shopConfig = $shopConfig;
@@ -292,7 +294,7 @@ class SecuritySubscriber implements SubscriberInterface
 
         $return = $args->getReturn();
 
-        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked || $this->sAdmin->sCheckUser()) {
+        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked ||  $this->sAdmin === NULL || $this->sAdmin->sCheckUser()) {
             return $return;
         }
 

@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.0.1";
+        return "1.0.2";
     }
 
 
@@ -166,6 +166,11 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->Path()
             );
 
+            try {
+                $sAdmin = Shopware()->Modules()->Admin();
+            } catch(Exception $ex) {
+                $sAdmin = NULL;
+            }
             $subscriber = new \Shopware\Mittwald\SecurityTools\Subscribers\SecuritySubscriber(
                 $this->Config(),
                 Shopware()->Config(),
@@ -174,10 +179,10 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->get('templatemail'),
                 $this->get('guzzle_http_client_factory'),
                 $this->get('snippets'),
-                Shopware()->Modules()->Admin(),
                 $this->Path(),
                 $this->Application()->AppPath(),
-                Shopware()->DocPath()
+                Shopware()->DocPath(),
+                $sAdmin
             );
 
             $this->Application()->Events()->addSubscriber($subscriber);
