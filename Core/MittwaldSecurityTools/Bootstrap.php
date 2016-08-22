@@ -148,6 +148,15 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $this->registerCustomModels();
     }
 
+    /**
+     * @param string $version
+     * @return bool
+     */
+    public function update($version)
+    {
+        return true;
+    }
+
 
     /**
      * Listener for Enlight_Controller_Front_StartDispatch
