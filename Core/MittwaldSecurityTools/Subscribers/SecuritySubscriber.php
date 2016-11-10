@@ -160,7 +160,7 @@ class SecuritySubscriber implements SubscriberInterface
             'Enlight_Controller_Action_PostDispatchSecure_Backend_UserManager' => 'addUserManagerTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Backend_Login' => 'addLoginTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addTemplates',
-            'Shopware_Modules_Admin_ValidateStep2_FilterResult' => 'recaptchaCheck',
+            'Enlight_Controller_Action_Frontend_Register_saveRegister' => 'onSaveRegister',
             'Theme_Compiler_Collect_Plugin_Less' => 'onCollectLessFiles',
             'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles',
             'Enlight_Bootstrap_AfterInitResource_Auth' => ['onAfterInitAuth', 999999]
@@ -272,23 +272,24 @@ class SecuritySubscriber implements SubscriberInterface
     }
 
     /**
-     * event listener for Shopware_Modules_Admin_ValidateStep2_FilterResult
-     *
-     * validates the google reCAPTCHA
+     * replacement for save register. will check the google reCAPTCHA and pipe data to original action, if captcha is valid
+     * or captcha validation is not activated.
      *
      * @param \Enlight_Event_EventArgs $args
-     * @return array
+     * @return bool|null
      */
-    public function recaptchaCheck(\Enlight_Event_EventArgs $args)
+    public function onSaveRegister(\Enlight_Event_EventArgs $args)
     {
-
-        $return = $args->getReturn();
-
         if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked) {
-            return $return;
+            return NULL;
         }
 
-        $postData = $args->getPost();
+        /**
+         * @var \Shopware_Controllers_Frontend_Register $controller
+         */
+        $controller = $args->getSubject();
+
+        $postData = $controller->Request()->getPost();
 
         $gCaptchaResponse = isset($postData['g-recaptcha-response']) ? $postData['g-recaptcha-response'] : FALSE;
 
@@ -309,13 +310,22 @@ class SecuritySubscriber implements SubscriberInterface
                 $this->logger->error('reCAPTCHA', 'secret is not valid.');
             }
 
-            $return[0][] = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/reCAPTCHA')
-                ->get('captchaFailed', 'Captcha-Überprüfung fehlgeschlagen', TRUE);
+            $errors = array(
+                'personal' => array(
+                    $this->snippets->getNamespace('plugins/MittwaldSecurityTools/reCAPTCHA')
+                        ->get('captchaFailed', 'Captcha-Überprüfung fehlgeschlagen', TRUE)
+                )
+            );
+
+            $controller->View()->assign('errors', $errors);
+            $controller->View()->assign($postData);
+            $controller->forward('index');
+            return TRUE;
         }
 
         $this->captchaChecked = TRUE;
 
-        return $return;
+        return NULL;
     }
 
     /**
