@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.1.1";
+        return "1.2.0";
     }
 
 
@@ -109,6 +109,9 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                  */
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
+                $this->createForm();
+            } else if ($version == '1.1.1') {
+                $this->createForm();
             }
             return TRUE;
         } catch (Exception $ex) {
@@ -347,6 +350,19 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $form->setElement('checkbox', 'showPasswordStrengthForUserRegistration', array(
             'label' => 'Passwort-Stärke in Registrierungsformular anzeigen',
             'required' => TRUE
+        ));
+
+        $form->setElement('select', 'minimumPasswordStrength', array(
+            'label' => 'Minimal-Anforderungen für Passwort-Stärke im Registrierungsprozess',
+            'description' => 'Bei Unterschreitung ist eine Registrierung nicht möglich.',
+            'required' => TRUE,
+            'value' => 0,
+            'store' => array(
+                array(0, 'Passwort nicht überprüfen / Shopware Standardverhalten'),
+                array(60, 'Geringe Komplexität (Zwei Balken, z.B. Klein- und Großbuchstaben)'),
+                array(86, 'Mittlere Komplexität (Drei Balken, z.B. Klein-, Großbuchstaben und Zahlen)'),
+                array(100, 'Hohe Komplexität (Vier Balken, Klein- und Großbuchstaben, Zahlen und Sonderzeichen)')
+            )
         ));
 
         $form->setElement('checkbox', 'showRecaptchaForUserRegistration', array(
