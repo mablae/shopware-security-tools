@@ -12,6 +12,7 @@ use Shopware\Components\Theme\LessDefinition;
 use Shopware\CustomModels\MittwaldSecurityTools\FailedLogin;
 use Shopware\Mittwald\SecurityTools\Components\MittwaldAuth;
 use Shopware\Mittwald\SecurityTools\Services\LogService;
+use Shopware\Mittwald\SecurityTools\Services\PasswordStrengthService;
 
 
 /**
@@ -63,6 +64,11 @@ class SecuritySubscriber implements SubscriberInterface
      * @var LogService
      */
     protected $logger;
+
+    /**
+     * @var PasswordStrengthService
+     */
+    protected $passwordStrengthService;
 
 
     /**
@@ -132,6 +138,7 @@ class SecuritySubscriber implements SubscriberInterface
         $this->pluginConfig = $pluginConfig;
         $this->shopConfig = $shopConfig;
         $this->logger = new LogService($this->pluginConfig);
+        $this->passwordStrengthService = new PasswordStrengthService();
         $this->modelManager = $modelManager;
         $this->templateMail = $templateMail;
         $this->db = $db;
@@ -160,6 +167,7 @@ class SecuritySubscriber implements SubscriberInterface
             'Enlight_Controller_Action_PostDispatchSecure_Backend_UserManager' => 'addUserManagerTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Backend_Login' => 'addLoginTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addTemplates',
+            'Enlight_Controller_Action_PostDispatch_Frontend_Register' => 'enhanceAjaxPasswordValidation',
             'Enlight_Controller_Action_Frontend_Register_saveRegister' => 'onSaveRegister',
             'Theme_Compiler_Collect_Plugin_Less' => 'onCollectLessFiles',
             'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles',
@@ -280,10 +288,6 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function onSaveRegister(\Enlight_Event_EventArgs $args)
     {
-        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked) {
-            return NULL;
-        }
-
         /**
          * @var \Shopware_Controllers_Frontend_Register $controller
          */
@@ -291,41 +295,93 @@ class SecuritySubscriber implements SubscriberInterface
 
         $postData = $controller->Request()->getPost();
 
-        $gCaptchaResponse = isset($postData['g-recaptcha-response']) ? $postData['g-recaptcha-response'] : FALSE;
+        $errors = array(
+            'personal' => array()
+        );
 
-        $response = $this->client->post('https://www.google.com/recaptcha/api/siteverify', [
-            'body' => [
-                'secret' => $this->pluginConfig->recaptchaSecretKey,
-                'response' => $gCaptchaResponse
-            ]
-        ]);
 
-        $responseData = json_decode($response->getBody(), TRUE);
+        if ($this->pluginConfig->showRecaptchaForUserRegistration && !$this->captchaChecked) {
+            $gCaptchaResponse = isset($postData['g-recaptcha-response']) ? $postData['g-recaptcha-response'] : FALSE;
 
-        if (!$responseData['success']) {
-            if (is_array($responseData['error-codes']) &&
-                (in_array('missing-input-secret', $responseData['error-codes']) ||
-                    in_array('invalid-input-secret', $responseData['error-codes']))
-            ) {
-                $this->logger->error('reCAPTCHA', 'secret is not valid.');
+            $response = $this->client->post('https://www.google.com/recaptcha/api/siteverify', [
+                'body' => [
+                    'secret' => $this->pluginConfig->recaptchaSecretKey,
+                    'response' => $gCaptchaResponse
+                ]
+            ]);
+
+            $responseData = json_decode($response->getBody(), TRUE);
+
+            if (!$responseData['success']) {
+                if (is_array($responseData['error-codes']) &&
+                    (in_array('missing-input-secret', $responseData['error-codes']) ||
+                        in_array('invalid-input-secret', $responseData['error-codes']))
+                ) {
+                    $this->logger->error('reCAPTCHA', 'secret is not valid.');
+                }
+
+                $errors['personal']['captcha'] = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/reCAPTCHA')
+                    ->get('captchaFailed', 'Captcha-Überprüfung fehlgeschlagen', TRUE);
+
             }
 
-            $errors = array(
-                'personal' => array(
-                    $this->snippets->getNamespace('plugins/MittwaldSecurityTools/reCAPTCHA')
-                        ->get('captchaFailed', 'Captcha-Überprüfung fehlgeschlagen', TRUE)
-                )
-            );
+            $this->captchaChecked = TRUE;
+        }
 
+        if ($this->pluginConfig->minimumPasswordStrength > 0 && intval($postData['register']['personal']['accountmode']) !== 1) {
+
+            $password = $postData['register']['personal']['password'];
+            if ($this->passwordStrengthService->getScore($password) < $this->pluginConfig->minimumPasswordStrength) {
+                $errors['personal']['password'] = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/passwordStrength')
+                    ->get('minimumPasswordStrengthFailed', 'Ihr Passwort ist nicht komplex genug.', TRUE);
+            }
+        }
+
+        if (count($errors['personal']) > 0) {
             $controller->View()->assign('errors', $errors);
             $controller->View()->assign($postData);
             $controller->forward('index');
             return TRUE;
         }
 
-        $this->captchaChecked = TRUE;
 
         return NULL;
+    }
+
+    /**
+     * adds the minimum password strength check to ajax password validation
+     *
+     * @param \Enlight_Event_EventArgs $args
+     */
+    public function enhanceAjaxPasswordValidation(\Enlight_Event_EventArgs $args)
+    {
+        /**
+         * @var \Enlight_Controller_Action $controller
+         */
+        $controller = $args->getSubject();
+
+        if($controller->Request()->getActionName() == 'ajax_validate_password')
+        {
+            $data = $controller->Request()->getPost('register');
+            $personal = $data['personal'];
+            $password = $personal['password'];
+
+            $passwordStrengthService = new PasswordStrengthService();
+            $passwordStrengthScore = $passwordStrengthService->getScore($password);
+
+            $bodyData = json_decode($controller->Response()->getBody(), true);
+
+            if($passwordStrengthScore < $this->pluginConfig->minimumPasswordStrength) {
+                $error = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/passwordStrength')
+                    ->get('minimumPasswordStrengthFailed', 'Ihr Passwort ist nicht komplex genug.', TRUE);
+
+                if(!$bodyData['password']){
+                    $bodyData['password'] = $error;
+                }
+
+                $controller->Response()->setBody(json_encode($bodyData));
+            }
+        }
     }
 
     /**
@@ -348,6 +404,7 @@ class SecuritySubscriber implements SubscriberInterface
         $view->addTemplateDir($this->pluginPath . 'Views');
 
         if ($this->pluginConfig->showPasswordStrengthForUserRegistration) {
+            $view->assign('mittwaldSecurityToolsMinimumPasswordStrength', $this->pluginConfig->minimumPasswordStrength);
             $view->extendsTemplate('frontend/plugin/mittwald_security_tools/password_strength/personal_fieldset.tpl');
         }
 
@@ -443,6 +500,10 @@ class SecuritySubscriber implements SubscriberInterface
         if ($this->pluginConfig->logFailedFELogins) {
             $mail = $args->getEmail();
             $errors = $args->getError();
+
+            if(!$mail) {
+                $mail = '';
+            }
 
             if ($errors) {
                 $this->saveFailedLogin($mail, FALSE);

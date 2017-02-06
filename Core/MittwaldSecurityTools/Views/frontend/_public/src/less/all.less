@@ -59,4 +59,17 @@
     border-radius: 5px;
     overflow: hidden;
   }
+
+  .mwst--password--strength--description {
+    .unitize(margin-top, 15);
+    .unitize(margin-bottom, 15);
+    .mwst--password--criteria-list {
+      padding-left: 1.8em;
+      li {
+        &.check {
+          color: @highlight-success;
+        }
+      }
+    }
+  }
 }

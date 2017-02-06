@@ -4,6 +4,17 @@
 
     $.plugin('mwstPasswordStrength', {
 
+        defaults: {
+
+            /**
+             * The selector for the criteria list
+             *
+             * @property criterialist
+             * @type {string}
+             */
+            criterialist: null
+        },
+
         /**
          * Default plugin initialisation function.
          * Registers all needed event listeners
@@ -12,8 +23,11 @@
          * @method init
          */
         init: function () {
-            var me = this;
-            console.log(me);
+            var me = this,
+                opts = me.opts;
+
+            me.applyDataAttributes();
+
             me.password = me.$el.parents('form').find('.password');
 
             me._on(me.password, 'keyup', function () {
@@ -30,8 +44,6 @@
             var score = plugin.getScore(password);
             var strength = 0;
 
-            console.log(score);
-
             if (score > 86) {
                 strength = 3;
             } else if (score > 60) {
@@ -45,6 +57,42 @@
             plugin.$el.removeClass('mwst--password--strength--2');
             plugin.$el.removeClass('mwst--password--strength--3');
             plugin.$el.addClass('mwst--password--strength--' + strength.toString());
+
+            if (plugin.opts.criterialist) {
+                var criteriaList = $(plugin.opts.criterialist);
+
+                if(criteriaList){
+                    if(this.hasBigSmall(password))
+                    {
+                        criteriaList.find('.mwst--passwort--criteria--big-small').addClass('check');
+                    } else {
+                        criteriaList.find('.mwst--passwort--criteria--big-small').removeClass('check');
+                    }
+
+                    if(this.hasSpecialChars(password))
+                    {
+                        criteriaList.find('.mwst--passwort--criteria--special-chars').addClass('check');
+                    } else {
+                        criteriaList.find('.mwst--passwort--criteria--special-chars').removeClass('check');
+                    }
+
+                    if(this.hasNumbers(password))
+                    {
+                        criteriaList.find('.mwst--passwort--criteria--numbers').addClass('check');
+                    } else {
+                        criteriaList.find('.mwst--passwort--criteria--numbers').removeClass('check');
+                    }
+                }
+            }
+        },
+        hasBigSmall: function (password) {
+            return password.match(/[a-z]/) && password.match(/[A-Z]/);
+        },
+        hasSpecialChars: function (password) {
+            return password.match(/[\!\#\$%\*\+,\-\.;\/\[\]_:\&\@\§\=]/);
+        },
+        hasNumbers: function (password) {
+            return password.match(/[0-9]/);
         },
         getScore: function (password) {
             var minChars = 8;
@@ -69,16 +117,15 @@
             // If there are less than 8 characters, the bar should not fill over 50%
             if (countCharacters >= minChars) {
 
-                if (password.match(/[a-z]/) && password.match(/[A-Z]/)) {
+                if (this.hasBigSmall(password)) {
                     passwordSignificance += bigAndSmallCharsSignificance;
-
                 }
 
-                if (password.match(/[!#\$%\*\+,\-\.;\/\[\]_:]/)) {
+                if (this.hasSpecialChars(password)) {
                     passwordSignificance += specialCharSignificance;
                 }
 
-                if (password.match(/[0-9]/)) {
+                if (this.hasNumbers(password)) {
                     passwordSignificance += numberSignificance;
 
                 }
