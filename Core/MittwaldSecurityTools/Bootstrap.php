@@ -418,7 +418,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'class' => 'mittwald-custom-icon',
             'action' => 'Index',
             'active' => 1,
-            'parent' => $this->Menu()->findOneBy('label', 'Einstellungen')
+            'parent' => $this->Menu()->findOneBy(['label' => 'Einstellungen'])
         ));
     }
 
