@@ -501,6 +501,10 @@ class SecuritySubscriber implements SubscriberInterface
             $mail = $args->getEmail();
             $errors = $args->getError();
 
+            if(!$mail) {
+                $mail = '';
+            }
+
             if ($errors) {
                 $this->saveFailedLogin($mail, FALSE);
             }
