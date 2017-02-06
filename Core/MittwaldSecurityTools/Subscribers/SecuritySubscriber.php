@@ -328,9 +328,9 @@ class SecuritySubscriber implements SubscriberInterface
             $this->captchaChecked = TRUE;
         }
 
-        if ($this->pluginConfig->minimumPasswordStrength > 0) {
-            $password = $postData['register']['personal']['password'];
+        if ($this->pluginConfig->minimumPasswordStrength > 0 && intval($postData['register']['personal']['accountmode']) !== 1) {
 
+            $password = $postData['register']['personal']['password'];
             if ($this->passwordStrengthService->getScore($password) < $this->pluginConfig->minimumPasswordStrength) {
                 $errors['personal']['password'] = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/passwordStrength')
                     ->get('minimumPasswordStrengthFailed', 'Ihr Passwort ist nicht komplex genug.', TRUE);
