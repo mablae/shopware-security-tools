@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.0.2";
+        return "1.0.3";
     }
 
 
@@ -175,11 +175,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->Path()
             );
 
-            try {
-                $sAdmin = Shopware()->Modules()->Admin();
-            } catch(Exception $ex) {
-                $sAdmin = NULL;
-            }
             $subscriber = new \Shopware\Mittwald\SecurityTools\Subscribers\SecuritySubscriber(
                 $this->Config(),
                 Shopware()->Config(),
@@ -190,8 +185,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $this->get('snippets'),
                 $this->Path(),
                 $this->Application()->AppPath(),
-                Shopware()->DocPath(),
-                $sAdmin
+                Shopware()->DocPath()
             );
 
             $this->Application()->Events()->addSubscriber($subscriber);
@@ -424,7 +418,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'class' => 'mittwald-custom-icon',
             'action' => 'Index',
             'active' => 1,
-            'parent' => $this->Menu()->findOneBy('label', 'Einstellungen')
+            'parent' => $this->Menu()->findOneBy(['label' => 'Einstellungen'])
         ));
     }
 

@@ -121,7 +121,6 @@ class SecuritySubscriber implements SubscriberInterface
      * @param \Shopware_Components_TemplateMail $templateMail
      * @param GuzzleFactory $guzzleFactory
      * @param \Shopware_Components_Snippet_Manager $snippets
-     * @param \sAdmin $sAdmin
      * @param string $pluginPath
      * @param string $appPath
      * @param string $docPath
@@ -135,8 +134,7 @@ class SecuritySubscriber implements SubscriberInterface
                                 \Shopware_Components_Snippet_Manager $snippets,
                                 $pluginPath,
                                 $appPath,
-                                $docPath,
-                                \sAdmin $sAdmin = NULL)
+                                $docPath)
     {
         $this->pluginConfig = $pluginConfig;
         $this->shopConfig = $shopConfig;
@@ -146,7 +144,6 @@ class SecuritySubscriber implements SubscriberInterface
         $this->db = $db;
         $this->client = $guzzleFactory->createClient();
         $this->snippets = $snippets;
-        $this->sAdmin = $sAdmin;
         $this->pluginPath = $pluginPath;
         $this->appPath = $appPath;
         $this->docPath = $docPath;
@@ -294,7 +291,16 @@ class SecuritySubscriber implements SubscriberInterface
 
         $return = $args->getReturn();
 
-        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked ||  $this->sAdmin === NULL || $this->sAdmin->sCheckUser()) {
+        // try to get admin
+        if($this->sAdmin === NULL){
+            try {
+                $this->sAdmin = Shopware()->Modules()->Admin();
+            } catch (\Exception $ex) {
+
+            }
+        }
+
+        if (!$this->pluginConfig->showRecaptchaForUserRegistration || $this->captchaChecked || $this->sAdmin === NULL || $this->sAdmin->sCheckUser()) {
             return $return;
         }
 
@@ -444,6 +450,10 @@ class SecuritySubscriber implements SubscriberInterface
         if ($this->pluginConfig->logFailedFELogins) {
             $mail = $args->getEmail();
             $errors = $args->getError();
+
+            if(!$mail) {
+                $mail = '';
+            }
 
             if ($errors) {
                 $this->saveFailedLogin($mail, FALSE);
