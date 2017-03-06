@@ -409,6 +409,9 @@ class SecuritySubscriber implements SubscriberInterface
         }
 
         if ($this->pluginConfig->showRecaptchaForUserRegistration) {
+            if($this->pluginConfig->recaptchaLanguageKey){
+                $view->assign('mittwaldSecurityToolsRecaptchaLanguageKey', $this->pluginConfig->recaptchaLanguageKey);
+            }
             $view->assign('mittwaldSecurityToolsRecaptchaKey', $this->pluginConfig->recaptchaAPIKey);
             $view->extendsTemplate('frontend/plugin/mittwald_security_tools/customer_recaptcha/index.tpl');
         }

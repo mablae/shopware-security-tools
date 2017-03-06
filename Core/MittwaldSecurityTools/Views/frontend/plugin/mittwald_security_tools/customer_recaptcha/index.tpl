@@ -33,5 +33,5 @@
 
 {* add googles recaptcha script *}
 {block name='frontend_index_header_javascript_jquery_lib' append}
-    <script src='https://www.google.com/recaptcha/api.js'></script>
+    <script src='https://www.google.com/recaptcha/api.js{if $mittwaldSecurityToolsRecaptchaLanguageKey}?hl={$mittwaldSecurityToolsRecaptchaLanguageKey}{/if}'></script>
 {/block}

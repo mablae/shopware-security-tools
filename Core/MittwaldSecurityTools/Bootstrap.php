@@ -382,6 +382,13 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin'
         ));
 
+        $form->setElement('textfield', 'recaptchaLanguageKey', array(
+            'label' => 'reCAPTCHA: Sprachcode',
+            'required' => FALSE,
+            'description' => 'Standardmäßig wird Google die Sprache aus dem Browser auslesen. Wenn Sie eine Sprache vorgeben möchten, können Sie hier einen Sprachcode angeben (siehe https://developers.google.com/recaptcha/docs/language)',
+            'scope' => Shopware\Models\Config\Element::SCOPE_SHOP
+        ));
+
         $form->setElement('checkbox', 'mailNotificationForModifiedCoreFiles', array(
             'label' => 'Mail-Notifications für veränderte Core-Dateien aktivieren',
             'required' => TRUE
