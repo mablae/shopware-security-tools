@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.2.1";
+        return "1.3.0";
     }
 
 
@@ -109,9 +109,17 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                  */
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
+                $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
                 $this->createForm();
-            } else if ($version == '1.1.1') {
+                $this->insertLockedAccountMailTemplate();
+            } else if ($version == '1.1.1' || $version == '1.2.0' || $version == '1.2.1') {
                 $this->createForm();
+                $this->insertLockedAccountMailTemplate();
+                /**
+                 * @var \Shopware\Bundle\AttributeBundle\Service\CrudService $service
+                 */
+                $service = $this->get('shopware_attribute.crud_service');
+                $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
             }
             return TRUE;
         } catch (Exception $ex) {
@@ -244,6 +252,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
          */
         $service = $this->get('shopware_attribute.crud_service');
         $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
+        $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
     }
 
 
@@ -272,6 +281,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
              */
             $service = $this->get('shopware_attribute.crud_service');
             $service->delete('s_core_auth_attributes', 'Mittwald_YubiKey', true);
+            $service->delete('s_user_attributes', 'mittwald_lastlockedaccountmail');
 
         } catch (Exception $e) {
             //ignore
@@ -399,6 +409,18 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'required' => TRUE
         ));
 
+        $form->setElement('checkbox', 'sendLockedAccountMail', array(
+            'label' => 'Mail an Kunden verschicken, wenn Account wegen fehlgeschlagener Loginversuche gesperrt wurde',
+            'required' => TRUE
+        ));
+
+        $form->setElement('number', 'sendLockedAccountMailInterval', array(
+            'label' => 'Zeit zwischen Mails an Kunden bezüglich Accountsperrung (Minuten)',
+            'description' => 'Bei 0 wird bei jedem fehlgeschlagenem Loginversuch, nach dem der Account gesperrt ist, jeweils eine Mail verschickt. Bei Zahlen > 0 werden die Mails höchstens im Abstand der definierten Minutenanzahl verschickt.',
+            'required' => TRUE,
+            'value' => 10
+        ));
+
     }
 
     /**
@@ -490,6 +512,26 @@ EOT;
 EOT;
 
         $this->get('db')->executeUpdate($sql);
+
+        $this->insertLockedAccountMailTemplate();
+    }
+
+    /**
+     * insert mail template for locked account mail
+     */
+    public function insertLockedAccountMailTemplate()
+    {
+        $sql = <<<EOT
+                    INSERT INTO `s_core_config_mails`
+                        (`id`, `stateId`, `name`, `frommail`, `fromname`, `subject`, `content`, `contentHTML`,
+                         `ishtml`, `attachment`, `mailtype`, `context`, `dirty`)
+                    VALUES (NULL, NULL, 'sLOCKEDACCOUNT', '{config name=mail}', '{config name=shopName}',
+                            'Ihr Konto im {config name=shopName} wurde vorübergehend gesperrt',
+                            '{include file="string:{config name=emailheaderplain}"} \nHallo, \nIhr Benutzerkonto im {config name=shopName} wurde wegen zu vieler fehlgeschlagener Loginversuche vorübergehend gesperrt. Wenn Sie sich Ihr Passwort vergessen haben, verwenden Sie bitte die "Passwort vergessen"-Funktion. \n{include file="string:{config name=emailfooterplain}"}',
+                            '', '0', '', '2', '', '0');'
+EOT;
+
+        $this->get('db')->executeUpdate($sql);
     }
 
     /**
@@ -498,7 +540,7 @@ EOT;
     public function removeMailTemplate()
     {
         $sql = 'DELETE FROM `s_core_config_mails`
-                WHERE name IN ("sFAILEDLOGIN", "sMODIFIEDFILES")';
+                WHERE name IN ("sFAILEDLOGIN", "sMODIFIEDFILES", "sLOCKEDACCOUNT")';
 
         $this->get('db')->executeUpdate($sql);
     }
