@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.2.1";
+        return "1.3.0";
     }
 
 
@@ -109,9 +109,17 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                  */
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
+                $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
                 $this->createForm();
-            } else if ($version == '1.1.1') {
+                $this->insertLockedAccountMailTemplate();
+            } else if ($version == '1.1.1' || $version == '1.2.0' || $version == '1.2.1') {
                 $this->createForm();
+                $this->insertLockedAccountMailTemplate();
+                /**
+                 * @var \Shopware\Bundle\AttributeBundle\Service\CrudService $service
+                 */
+                $service = $this->get('shopware_attribute.crud_service');
+                $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
             }
             return TRUE;
         } catch (Exception $ex) {
@@ -244,6 +252,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
          */
         $service = $this->get('shopware_attribute.crud_service');
         $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
+        $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
     }
 
 
@@ -272,6 +281,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
              */
             $service = $this->get('shopware_attribute.crud_service');
             $service->delete('s_core_auth_attributes', 'Mittwald_YubiKey', true);
+            $service->delete('s_user_attributes', 'mittwald_lastlockedaccountmail');
 
         } catch (Exception $e) {
             //ignore
@@ -286,70 +296,116 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         $form = $this->Form();
 
+
+        $form->setElement('button', 'yubikeyGroup', array(
+            'label' => '2-Faktor Authentifizierung',
+            'handler' => "function(btn) {}",
+            'position' => 10
+        ));
+
         $form->setElement('checkbox', 'useYubicoAuth', array(
             'label' => '2-Faktor Authentifizierung über Yubico aktivieren',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 20
         ));
+
+        $form->setElement('button', 'failedLoginsGroup', array(
+            'label' => 'Fehlgeschlagene Loginversuche',
+            'handler' => "function(btn) {}",
+            'position' => 30
+        ));
+
 
         $form->setElement('checkbox', 'logFailedBELogins', array(
             'label' => 'Fehlgeschlagene Backend-Logins loggen',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 40
         ));
 
         $form->setElement('checkbox', 'logFailedFELogins', array(
             'label' => 'Fehlgeschlagene Frontend-Logins loggen',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 50
         ));
 
         $form->setElement('checkbox', 'cleanUpLogFailedBELogins', array(
             'label' => 'Fehlgeschlagene Backend-Logins bereinigen',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 60
         ));
 
         $form->setElement('number', 'cleanUpLogFailedBELoginsInterval', array(
             'label' => 'Vorhaltezeit für fehlgeschlagene Backend-Logins in Tagen',
             'required' => TRUE,
-            'value' => 7
+            'value' => 7,
+            'position' => 70
         ));
 
         $form->setElement('checkbox', 'cleanUpLogFailedFELogins', array(
             'label' => 'Fehlgeschlagene Frontend-Logins bereinigen',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 80
         ));
 
         $form->setElement('number', 'cleanUpLogFailedFELoginsInterval', array(
             'label' => 'Vorhaltezeit für fehlgeschlagene Frontend-Logins in Tagen',
             'required' => TRUE,
-            'value' => 2
+            'value' => 2,
+            'position' => 90
         ));
 
         $form->setElement('checkbox', 'mailNotificationForFailedFELogins', array(
             'label' => 'Mail-Notifications für fehlgeschlagene Frontend-Logins aktivieren',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 100
         ));
 
         $form->setElement('number', 'mailNotificationForFailedFELoginsLimit', array(
             'label' => 'Schwellwert für Mail-Notifications (Frontend)',
             'description' => 'Übersteigt die Zahl der fehlgeschlagenen Frontend-Logins innerhalb einer Stunde diesen Schwellwert, wird eine Mail-Notifications verschickt.',
             'required' => TRUE,
-            'value' => 10
+            'value' => 10,
+            'position' => 110
         ));
 
         $form->setElement('checkbox', 'mailNotificationForFailedBELogins', array(
             'label' => 'Mail-Notifications für fehlgeschlagene Backend-Logins aktivieren',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 120
         ));
 
         $form->setElement('number', 'mailNotificationForFailedBELoginsLimit', array(
             'label' => 'Schwellwert für Mail-Notifications (Backend)',
             'description' => 'Übersteigt die Zahl der fehlgeschlagenen Backend-Logins innerhalb einer Stunde diesen Schwellwert, wird eine Mail-Notifications verschickt.',
             'required' => TRUE,
-            'value' => 10
+            'value' => 10,
+            'position' => 130
+        ));
+
+        $form->setElement('checkbox', 'sendLockedAccountMail', array(
+            'label' => 'Mail an Kunden verschicken, wenn Account wegen fehlgeschlagener Loginversuche gesperrt wurde',
+            'required' => TRUE,
+            'position' => 140
+        ));
+
+        $form->setElement('number', 'sendLockedAccountMailInterval', array(
+            'label' => 'Zeit zwischen Mails an Kunden bezüglich Accountsperrung (Minuten)',
+            'description' => 'Bei 0 wird bei jedem fehlgeschlagenem Loginversuch, nach dem der Account gesperrt ist, jeweils eine Mail verschickt. Bei Zahlen > 0 werden die Mails höchstens im Abstand der definierten Minutenanzahl verschickt.',
+            'required' => TRUE,
+            'value' => 10,
+            'position' => 150
+        ));
+
+        $form->setElement('button', 'passwordStrengthGroup', array(
+            'label' => 'Passwortstärke',
+            'handler' => "function(btn) {}",
+            'position' => 160
         ));
 
         $form->setElement('checkbox', 'showPasswordStrengthForUserRegistration', array(
             'label' => 'Passwort-Stärke in Registrierungsformular anzeigen',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 170
         ));
 
         $form->setElement('select', 'minimumPasswordStrength', array(
@@ -362,34 +418,61 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 array(60, 'Geringe Komplexität (Zwei Balken, z.B. Klein- und Großbuchstaben)'),
                 array(86, 'Mittlere Komplexität (Drei Balken, z.B. Klein-, Großbuchstaben und Zahlen)'),
                 array(100, 'Hohe Komplexität (Vier Balken, Klein- und Großbuchstaben, Zahlen und Sonderzeichen)')
-            )
+            ),
+            'position' => 180
+        ));
+
+
+        $form->setElement('button', 'recaptchaGroup', array(
+            'label' => 'reCaptcha',
+            'handler' => "function(btn) {}",
+            'position' => 190
         ));
 
         $form->setElement('checkbox', 'showRecaptchaForUserRegistration', array(
             'label' => 'reCAPTCHA in Registrierungsformular anzeigen',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 200
         ));
 
         $form->setElement('textfield', 'recaptchaAPIKey', array(
             'label' => 'reCAPTCHA: Websiteschlüssel',
             'required' => TRUE,
-            'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin'
+            'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin',
+            'position' => 210
         ));
 
         $form->setElement('textfield', 'recaptchaSecretKey', array(
             'label' => 'reCAPTCHA: Geheimer Schlüssel',
             'required' => TRUE,
-            'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin'
+            'description' => 'Hier können Sie sich die entsprechenden Schlüssel generieren: https://www.google.com/recaptcha/admin',
+            'position' => 220
+        ));
+
+        $form->setElement('textfield', 'recaptchaLanguageKey', array(
+            'label' => 'reCAPTCHA: Sprachcode',
+            'required' => FALSE,
+            'description' => 'Standardmäßig wird Google die Sprache aus dem Browser auslesen. Wenn Sie eine Sprache vorgeben möchten, können Sie hier einen Sprachcode angeben (siehe https://developers.google.com/recaptcha/docs/language)',
+            'scope' => Shopware\Models\Config\Element::SCOPE_SHOP,
+            'position' => 230
+        ));
+
+        $form->setElement('button', 'variousGroup', array(
+            'label' => 'Verschiedenes',
+            'handler' => "function(btn) {}",
+            'position' => 240
         ));
 
         $form->setElement('checkbox', 'mailNotificationForModifiedCoreFiles', array(
             'label' => 'Mail-Notifications für veränderte Core-Dateien aktivieren',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 250
         ));
 
         $form->setElement('checkbox', 'debugMode', array(
             'label' => 'Debug-Modus aktivieren',
-            'required' => TRUE
+            'required' => TRUE,
+            'position' => 260
         ));
 
     }
@@ -483,6 +566,26 @@ EOT;
 EOT;
 
         $this->get('db')->executeUpdate($sql);
+
+        $this->insertLockedAccountMailTemplate();
+    }
+
+    /**
+     * insert mail template for locked account mail
+     */
+    public function insertLockedAccountMailTemplate()
+    {
+        $sql = <<<EOT
+                    INSERT INTO `s_core_config_mails`
+                        (`id`, `stateId`, `name`, `frommail`, `fromname`, `subject`, `content`, `contentHTML`,
+                         `ishtml`, `attachment`, `mailtype`, `context`, `dirty`)
+                    VALUES (NULL, NULL, 'sLOCKEDACCOUNT', '{config name=mail}', '{config name=shopName}',
+                            'Ihr Konto im {config name=shopName} wurde vorübergehend gesperrt',
+                            '{include file="string:{config name=emailheaderplain}"} \nHallo, \nIhr Benutzerkonto im {config name=shopName} wurde wegen zu vieler fehlgeschlagener Loginversuche vorübergehend gesperrt. Wenn Sie sich Ihr Passwort vergessen haben, verwenden Sie bitte die "Passwort vergessen"-Funktion. \n{include file="string:{config name=emailfooterplain}"}',
+                            '', '0', '', '2', '', '0');'
+EOT;
+
+        $this->get('db')->executeUpdate($sql);
     }
 
     /**
@@ -491,7 +594,7 @@ EOT;
     public function removeMailTemplate()
     {
         $sql = 'DELETE FROM `s_core_config_mails`
-                WHERE name IN ("sFAILEDLOGIN", "sMODIFIEDFILES")';
+                WHERE name IN ("sFAILEDLOGIN", "sMODIFIEDFILES", "sLOCKEDACCOUNT")';
 
         $this->get('db')->executeUpdate($sql);
     }

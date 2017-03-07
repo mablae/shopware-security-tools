@@ -360,8 +360,7 @@ class SecuritySubscriber implements SubscriberInterface
          */
         $controller = $args->getSubject();
 
-        if($controller->Request()->getActionName() == 'ajax_validate_password')
-        {
+        if ($controller->Request()->getActionName() == 'ajax_validate_password') {
             $data = $controller->Request()->getPost('register');
             $personal = $data['personal'];
             $password = $personal['password'];
@@ -371,11 +370,11 @@ class SecuritySubscriber implements SubscriberInterface
 
             $bodyData = json_decode($controller->Response()->getBody(), true);
 
-            if($passwordStrengthScore < $this->pluginConfig->minimumPasswordStrength) {
+            if ($passwordStrengthScore < $this->pluginConfig->minimumPasswordStrength) {
                 $error = $this->snippets->getNamespace('plugins/MittwaldSecurityTools/passwordStrength')
                     ->get('minimumPasswordStrengthFailed', 'Ihr Passwort ist nicht komplex genug.', TRUE);
 
-                if(!$bodyData['password']){
+                if (!$bodyData['password']) {
                     $bodyData['password'] = $error;
                 }
 
@@ -409,6 +408,9 @@ class SecuritySubscriber implements SubscriberInterface
         }
 
         if ($this->pluginConfig->showRecaptchaForUserRegistration) {
+            if ($this->pluginConfig->recaptchaLanguageKey) {
+                $view->assign('mittwaldSecurityToolsRecaptchaLanguageKey', $this->pluginConfig->recaptchaLanguageKey);
+            }
             $view->assign('mittwaldSecurityToolsRecaptchaKey', $this->pluginConfig->recaptchaAPIKey);
             $view->extendsTemplate('frontend/plugin/mittwald_security_tools/customer_recaptcha/index.tpl');
         }
@@ -497,16 +499,22 @@ class SecuritySubscriber implements SubscriberInterface
      */
     public function logFailedFELogin(\Enlight_Event_EventArgs $args)
     {
-        if ($this->pluginConfig->logFailedFELogins) {
+        if ($this->pluginConfig->logFailedFELogins || $this->pluginConfig->sendLockedAccountMail) {
             $mail = $args->getEmail();
             $errors = $args->getError();
 
-            if(!$mail) {
+            if (!$mail) {
                 $mail = '';
             }
 
             if ($errors) {
-                $this->saveFailedLogin($mail, FALSE);
+                if($this->pluginConfig->logFailedFELogins) {
+                    $this->saveFailedLogin($mail, FALSE);
+                }
+
+                if ($mail && $this->pluginConfig->sendLockedAccountMail) {
+                    $this->checkLockedAccountMail($mail);
+                }
             }
         }
         return $args->getReturn();
@@ -610,6 +618,42 @@ class SecuritySubscriber implements SubscriberInterface
             $mail = $this->templateMail->createMail('sFAILEDLOGIN');
             $mail->addTo($this->shopConfig->get('sMAIL'));
             $mail->send();
+        }
+    }
+
+    /**
+     * Checks the locked account mail interval and sends mail if necessary
+     *
+     * @param string $mail
+     */
+    protected function checkLockedAccountMail($mail)
+    {
+        $sql = "
+                            SELECT u.id, u.email, u.lockeduntil, u.failedlogins
+                            FROM s_user AS u
+                            INNER JOIN s_user_attributes AS a
+                              ON u.id = a.userID
+                            WHERE u.active = 1 AND u.accountmode = 0 AND u.lockeduntil IS NOT NULL AND u.email = ?
+                        ";
+        $params = array($mail);
+
+        if (intval($this->pluginConfig->sendLockedAccountMailInterval) > 0) {
+            $lockedAccountLimit = new \DateTime('-' . intval($this->pluginConfig->sendLockedAccountMailInterval) . ' minute');
+            $sql .= ' AND (a.mittwald_lastlockedaccountmail IS NULL OR a.mittwald_lastlockedaccountmail < ?)';
+            $params[] = $lockedAccountLimit->format("Y-m-d H:i:s");
+        }
+
+        $user = $this->db->fetchRow($sql, $params);
+
+        if ($user) {
+            $templateMail = $this->templateMail->createMail('sLOCKEDACCOUNT', $user);
+            $templateMail->addTo($mail);
+            $templateMail->send();
+            $this->db->executeUpdate("
+                            UPDATE s_user_attributes 
+                            SET mittwald_lastlockedaccountmail = NOW()
+                            WHERE userID = ?
+                        ", array($user['id']));
         }
     }
 
