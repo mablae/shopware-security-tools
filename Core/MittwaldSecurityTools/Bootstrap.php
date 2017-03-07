@@ -422,16 +422,16 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'position' => 180
         ));
 
-        $form->setElement('checkbox', 'showRecaptchaForUserRegistration', array(
-            'label' => 'reCAPTCHA in Registrierungsformular anzeigen',
-            'required' => TRUE,
-            'position' => 190
-        ));
-
 
         $form->setElement('button', 'recaptchaGroup', array(
             'label' => 'reCaptcha',
             'handler' => "function(btn) {}",
+            'position' => 190
+        ));
+
+        $form->setElement('checkbox', 'showRecaptchaForUserRegistration', array(
+            'label' => 'reCAPTCHA in Registrierungsformular anzeigen',
+            'required' => TRUE,
             'position' => 200
         ));
 
