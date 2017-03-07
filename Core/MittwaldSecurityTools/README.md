@@ -10,7 +10,8 @@ Die folgenden Funktionen sind im Plugin enthalten und können unabhängig vonein
 * Allgemeine Sicherheitshinweise
 * Google reCaptcha für Kundenregistrierung
 * Anzeige zur Passwortsicherheit bei der Kundenregistrierung
-
+* Einstellbare Mindestkomplexität für Kundenpasswörter
+* Automatische Hinweismails an Kunden, wenn Ihr Kundenkonto aufgrund zu vieler fehlgeschlagener Loginversuche gesperrt wurde
 
 Die Frontend-Features sind für das Shopware Responsive Theme optimiert und nutzen den systeminternen LESS- und JS- Precompiler.
 
