@@ -513,34 +513,7 @@ class SecuritySubscriber implements SubscriberInterface
                 }
 
                 if ($mail && $this->pluginConfig->sendLockedAccountMail) {
-                    $sql = "
-                            SELECT u.id, u.email, u.lockeduntil, u.failedlogins
-                            FROM s_user AS u
-                            INNER JOIN s_user_attributes AS a
-                              ON u.id = a.userID
-                            WHERE u.active = 1 AND u.accountmode = 0 AND u.lockeduntil IS NOT NULL AND u.email = ?
-                        ";
-                    $params = array($mail);
-
-                    if(intval($this->pluginConfig->sendLockedAccountMailInterval) > 0)
-                    {
-                        $lockedAccountLimit = new \DateTime('-' . intval($this->pluginConfig->sendLockedAccountMailInterval) . ' minute');
-                        $sql .= ' AND (a.mittwald_lastlockedaccountmail IS NULL OR a.mittwald_lastlockedaccountmail < ?)';
-                        $params[] = $lockedAccountLimit->format("Y-m-d H:i:s");
-                    }
-
-                    $user = $this->db->fetchRow($sql, $params);
-
-                    if($user) {
-                        $templateMail = $this->templateMail->createMail('sLOCKEDACCOUNT', $user);
-                        $templateMail->addTo($mail);
-                        $templateMail->send();
-                        $this->db->executeUpdate("
-                            UPDATE s_user_attributes 
-                            SET mittwald_lastlockedaccountmail = NOW()
-                            WHERE userID = ?
-                        ", array($user['id']));
-                    }
+                    $this->checkLockedAccountMail($mail);
                 }
             }
         }
@@ -645,6 +618,42 @@ class SecuritySubscriber implements SubscriberInterface
             $mail = $this->templateMail->createMail('sFAILEDLOGIN');
             $mail->addTo($this->shopConfig->get('sMAIL'));
             $mail->send();
+        }
+    }
+
+    /**
+     * Checks the locked account mail interval and sends mail if necessary
+     *
+     * @param string $mail
+     */
+    protected function checkLockedAccountMail($mail)
+    {
+        $sql = "
+                            SELECT u.id, u.email, u.lockeduntil, u.failedlogins
+                            FROM s_user AS u
+                            INNER JOIN s_user_attributes AS a
+                              ON u.id = a.userID
+                            WHERE u.active = 1 AND u.accountmode = 0 AND u.lockeduntil IS NOT NULL AND u.email = ?
+                        ";
+        $params = array($mail);
+
+        if (intval($this->pluginConfig->sendLockedAccountMailInterval) > 0) {
+            $lockedAccountLimit = new \DateTime('-' . intval($this->pluginConfig->sendLockedAccountMailInterval) . ' minute');
+            $sql .= ' AND (a.mittwald_lastlockedaccountmail IS NULL OR a.mittwald_lastlockedaccountmail < ?)';
+            $params[] = $lockedAccountLimit->format("Y-m-d H:i:s");
+        }
+
+        $user = $this->db->fetchRow($sql, $params);
+
+        if ($user) {
+            $templateMail = $this->templateMail->createMail('sLOCKEDACCOUNT', $user);
+            $templateMail->addTo($mail);
+            $templateMail->send();
+            $this->db->executeUpdate("
+                            UPDATE s_user_attributes 
+                            SET mittwald_lastlockedaccountmail = NOW()
+                            WHERE userID = ?
+                        ", array($user['id']));
         }
     }
 
