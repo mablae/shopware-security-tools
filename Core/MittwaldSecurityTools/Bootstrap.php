@@ -110,6 +110,13 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
                 $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
+
+                Shopware()->Models()->generateAttributeModels(
+                    array(
+                        's_core_auth_attributes',
+                        's_user_attributes'
+                    )
+                );
                 $this->createForm();
                 $this->insertLockedAccountMailTemplate();
             } else if ($version == '1.1.1' || $version == '1.2.0' || $version == '1.2.1') {
@@ -120,6 +127,13 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                  */
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
+
+                Shopware()->Models()->generateAttributeModels(
+                    array(
+                        's_core_auth_attributes',
+                        's_user_attributes'
+                    )
+                );
             } else {
                 $this->createForm();
             }
@@ -257,6 +271,13 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $service = $this->get('shopware_attribute.crud_service');
         $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
         $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
+
+        Shopware()->Models()->generateAttributeModels(
+            array(
+                's_core_auth_attributes',
+                's_user_attributes'
+            )
+        );
     }
 
 
@@ -286,6 +307,13 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             $service = $this->get('shopware_attribute.crud_service');
             $service->delete('s_core_auth_attributes', 'Mittwald_YubiKey', true);
             $service->delete('s_user_attributes', 'mittwald_lastlockedaccountmail');
+
+            Shopware()->Models()->generateAttributeModels(
+                array(
+                    's_core_auth_attributes',
+                    's_user_attributes'
+                )
+            );
 
         } catch (Exception $e) {
             //ignore
