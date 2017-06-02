@@ -167,8 +167,11 @@ class SecuritySubscriber implements SubscriberInterface
             'Enlight_Controller_Action_PostDispatchSecure_Backend_UserManager' => 'addUserManagerTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Backend_Login' => 'addLoginTemplates',
             'Enlight_Controller_Action_PostDispatchSecure_Frontend_Register' => 'addTemplates',
+            'Enlight_Controller_Action_PostDispatchSecure_Frontend' => 'addNewsletterTemplates',
+            'Enlight_Controller_Action_PostDispatchSecure_Frontend_Newsletter' => 'addNewsletterTemplates',
             'Enlight_Controller_Action_PostDispatch_Frontend_Register' => 'enhanceAjaxPasswordValidation',
             'Enlight_Controller_Action_Frontend_Register_saveRegister' => 'onSaveRegister',
+            'Enlight_Controller_Action_Frontend_Newsletter_index' => 'onSaveNewsletter',
             'Theme_Compiler_Collect_Plugin_Less' => 'onCollectLessFiles',
             'Theme_Compiler_Collect_Plugin_Javascript' => 'onCollectJSFiles',
             'Enlight_Bootstrap_AfterInitResource_Auth' => ['onAfterInitAuth', 999999]
@@ -277,6 +280,69 @@ class SecuritySubscriber implements SubscriberInterface
         }
 
         return TRUE;
+    }
+
+
+    /**
+     * replacement for newsletter index action. will check the google reCAPTCHA and pipe data to original action, if captcha is valid
+     * or captcha validation is not activated.
+     *
+     * @param \Enlight_Event_EventArgs $args
+     * @return bool|null
+     */
+    public function onSaveNewsletter(\Enlight_Event_EventArgs $args)
+    {
+        /**
+         * @var \Shopware_Controllers_Frontend_Newsletter $controller
+         */
+        $controller = $args->getSubject();
+
+        $postData = $controller->Request()->getPost();
+
+        if (isset($controller->Request()->sUnsubscribe)) {
+            return NULL;
+        }
+
+        $controller->View()->_POST = Shopware()->System()->_POST->toArray();
+
+        if (!isset(Shopware()->System()->_POST['newsletter'])) {
+            return NULL;
+        }
+
+
+        if ($this->pluginConfig->showRecaptchaForNewsletter && !$this->captchaChecked) {
+            $gCaptchaResponse = isset($postData['g-recaptcha-response']) ? $postData['g-recaptcha-response'] : FALSE;
+
+            $response = $this->client->post('https://www.google.com/recaptcha/api/siteverify', [
+                'body' => [
+                    'secret' => $this->pluginConfig->recaptchaSecretKey,
+                    'response' => $gCaptchaResponse
+                ]
+            ]);
+
+            $responseData = json_decode($response->getBody(), TRUE);
+
+            $this->captchaChecked = TRUE;
+
+            if (!$responseData['success']) {
+                if (is_array($responseData['error-codes']) &&
+                    (in_array('missing-input-secret', $responseData['error-codes']) ||
+                        in_array('invalid-input-secret', $responseData['error-codes']))
+                ) {
+                    $this->logger->error('reCAPTCHA', 'secret is not valid.');
+                }
+
+                $controller->View()->sStatus = ['code' => 5, 'message' => $this->snippets->getNamespace('plugins/MittwaldSecurityTools/reCAPTCHA')
+                    ->get('captchaFailed', 'Captcha-Überprüfung fehlgeschlagen', TRUE)];
+
+
+                return TRUE;
+
+            }
+        }
+
+
+        return NULL;
     }
 
     /**
@@ -416,6 +482,33 @@ class SecuritySubscriber implements SubscriberInterface
         }
 
 
+    }
+
+
+    /**
+     * add our frontend templates for reCAPTCHA if necessary
+     *
+     * @param \Enlight_Event_EventArgs $args
+     */
+    public function addNewsletterTemplates(\Enlight_Event_EventArgs $args)
+    {
+        if (!$this->pluginConfig->showRecaptchaForNewsletter) {
+            return;
+        }
+
+        /**
+         * @var \Enlight_Controller_Action $controller
+         */
+        $controller = $args->getSubject();
+
+        $view = $controller->View();
+        $view->addTemplateDir($this->pluginPath . 'Views');
+
+        if ($this->pluginConfig->recaptchaLanguageKey) {
+            $view->assign('mittwaldSecurityToolsRecaptchaLanguageKey', $this->pluginConfig->recaptchaLanguageKey);
+        }
+        $view->assign('mittwaldSecurityToolsRecaptchaKey', $this->pluginConfig->recaptchaAPIKey);
+        $view->extendsTemplate('frontend/plugin/mittwald_security_tools/newsletter_recaptcha/index.tpl');
     }
 
     /**

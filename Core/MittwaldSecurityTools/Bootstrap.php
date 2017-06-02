@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.3.1";
+        return "1.4.0";
     }
 
 
@@ -110,14 +110,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
                 $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
-
-                Shopware()->Models()->generateAttributeModels(
-                    array(
-                        's_core_auth_attributes',
-                        's_user_attributes'
-                    )
-                );
-
                 $this->createForm();
                 $this->insertLockedAccountMailTemplate();
             } else if ($version == '1.1.1' || $version == '1.2.0' || $version == '1.2.1') {
@@ -128,12 +120,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
                  */
                 $service = $this->get('shopware_attribute.crud_service');
                 $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
-
-                Shopware()->Models()->generateAttributeModels(
-                    array(
-                        's_user_attributes'
-                    )
-                );
+            } else {
+                $this->createForm();
             }
             return TRUE;
         } catch (Exception $ex) {
@@ -153,7 +141,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'invalidateCache' => array(
                 'backend',
                 'theme',
-                'template'
+                'template',
+                'proxy'
             )
         );
     }
@@ -170,7 +159,8 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'invalidateCache' => array(
                 'backend',
                 'theme',
-                'template'
+                'template',
+                'proxy'
             )
         );
     }
@@ -267,13 +257,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
         $service = $this->get('shopware_attribute.crud_service');
         $service->update('s_core_auth_attributes', 'Mittwald_YubiKey', 'string', [], null, true);
         $service->update('s_user_attributes', 'mittwald_lastlockedaccountmail', 'datetime', [], null, true);
-
-        Shopware()->Models()->generateAttributeModels(
-            array(
-                's_core_auth_attributes',
-                's_user_attributes'
-            )
-        );
     }
 
 
@@ -303,13 +286,6 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             $service = $this->get('shopware_attribute.crud_service');
             $service->delete('s_core_auth_attributes', 'Mittwald_YubiKey', true);
             $service->delete('s_user_attributes', 'mittwald_lastlockedaccountmail');
-
-            Shopware()->Models()->generateAttributeModels(
-                array(
-                    's_core_auth_attributes',
-                    's_user_attributes'
-                )
-            );
 
         } catch (Exception $e) {
             //ignore
@@ -461,6 +437,12 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'label' => 'reCAPTCHA in Registrierungsformular anzeigen',
             'required' => TRUE,
             'position' => 200
+        ));
+
+        $form->setElement('checkbox', 'showRecaptchaForNewsletter', array(
+            'label' => 'reCAPTCHA für Newsletter anzeigen',
+            'required' => TRUE,
+            'position' => 205
         ));
 
         $form->setElement('textfield', 'recaptchaAPIKey', array(
