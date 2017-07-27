@@ -606,9 +606,14 @@ class SecuritySubscriber implements SubscriberInterface
             $mail = $args->getEmail();
             $errors = $args->getError();
 
+            if(!$mail) {
+                $mail = strtolower(Shopware()->Front()->Request()->getPost('email'));
+            }
+
             if (!$mail) {
                 $mail = '';
             }
+
 
             if ($errors) {
                 if($this->pluginConfig->logFailedFELogins) {
