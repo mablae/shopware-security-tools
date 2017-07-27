@@ -478,7 +478,12 @@ class SecuritySubscriber implements SubscriberInterface
                 $view->assign('mittwaldSecurityToolsRecaptchaLanguageKey', $this->pluginConfig->recaptchaLanguageKey);
             }
             $view->assign('mittwaldSecurityToolsRecaptchaKey', $this->pluginConfig->recaptchaAPIKey);
-            $view->extendsTemplate('frontend/plugin/mittwald_security_tools/customer_recaptcha/index.tpl');
+
+            if($this->pluginConfig->useInvisibleRecaptcha) {
+                $view->extendsTemplate('frontend/plugin/mittwald_security_tools/customer_recaptcha/invisible.tpl');
+            } else {
+                $view->extendsTemplate('frontend/plugin/mittwald_security_tools/customer_recaptcha/index.tpl');
+            }
         }
 
 
@@ -508,7 +513,12 @@ class SecuritySubscriber implements SubscriberInterface
             $view->assign('mittwaldSecurityToolsRecaptchaLanguageKey', $this->pluginConfig->recaptchaLanguageKey);
         }
         $view->assign('mittwaldSecurityToolsRecaptchaKey', $this->pluginConfig->recaptchaAPIKey);
-        $view->extendsTemplate('frontend/plugin/mittwald_security_tools/newsletter_recaptcha/index.tpl');
+
+        if($this->pluginConfig->useInvisibleRecaptcha) {
+            $view->extendsTemplate('frontend/plugin/mittwald_security_tools/newsletter_recaptcha/invisible.tpl');
+        } else {
+            $view->extendsTemplate('frontend/plugin/mittwald_security_tools/newsletter_recaptcha/index.tpl');
+        }
     }
 
     /**

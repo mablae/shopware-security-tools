@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.4.0";
+        return "1.5.0";
     }
 
 
@@ -471,6 +471,12 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             'label' => 'reCAPTCHA für Newsletter anzeigen',
             'required' => TRUE,
             'position' => 205
+        ));
+
+        $form->setElement('checkbox', 'useInvisibleRecaptcha', array(
+            'label' => 'Invisible reCAPTCHA verwenden',
+            'required' => TRUE,
+            'position' => 2010
         ));
 
         $form->setElement('textfield', 'recaptchaAPIKey', array(
