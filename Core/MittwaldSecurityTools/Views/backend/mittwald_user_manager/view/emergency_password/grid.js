@@ -63,7 +63,7 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.emergencyPassword.Grid', {
                     var store =  me.up('grid').store;
 
                     window.open(
-                        '{url controller="MittwaldEmergencyPasswords" action="listCSV"}?userID=' + store.proxy.extraParams.userID,
+                        '{url controller="MittwaldEmergencyPasswords" action="listCSV"}?userID=' + store.proxy.extraParams.userID + '&__csrf_token=' + Ext.CSRFService.getToken(),
                         '_blank'
                     );
 
