@@ -45,7 +45,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
      */
     public function getVersion()
     {
-        return "1.5.1";
+        return "1.5.2";
     }
 
 
@@ -56,7 +56,7 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
     {
         return array(
             'version' => $this->getVersion(),
-            'copyright' => 'Copyright (c) 2016, Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG',
+            'copyright' => 'Copyright (c) 2018, Philipp Mahlow, Mittwald CM-Service GmbH & Co.KG',
             'label' => $this->getLabel(),
             'description' => file_get_contents($this->Path() . 'info.txt'),
             'link' => 'http://www.mittwald.de',
@@ -137,10 +137,12 @@ class Shopware_Plugins_Core_MittwaldSecurityTools_Bootstrap extends Shopware_Com
             } else {
                 $this->createForm();
             }
+
             return TRUE;
         } catch (Exception $ex) {
             return FALSE;
         }
+
     }
 
     /**
