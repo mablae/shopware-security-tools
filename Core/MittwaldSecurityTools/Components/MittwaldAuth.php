@@ -124,6 +124,8 @@ class MittwaldAuth extends Shopware_Components_Auth
                     return $authResult;
                 }
 
+                $userKey = substr($userKey, 0, 12);
+
                 //if the given token is not an emergency password or token is not valid anyway
                 if (!$this->validateEmergencyPassword($otp) && ($userKey !== substr($otp, 0, 12) || !$this->validateYubikeyOtp($otp))) {
                     $this->logger->debug('OTP', 'not valid');

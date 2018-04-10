@@ -41,10 +41,6 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.user.Create', {
             success: function(responseData, request) {
                 var response = Ext.JSON.decode(responseData.responseText);
 
-                me.attributeForm = Ext.create('Shopware.attribute.Form', {
-                    table: 's_core_auth_attributes'
-                });
-
                 me.attributeForm.loadAttribute(me.record.get('id'), function(){
 
                     me.yubikeyField = Ext.create('Ext.form.field.Text', {
@@ -64,6 +60,10 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.user.Create', {
 
                     me.attributeForm.add(me.hiddenYubikeyField);
 
+                    if(me.attributeForm.fields) {
+                        me.attributeForm.fields.push(me.hiddenYubikeyField);
+                    }
+
                     //add our new tab...
                     tabPanel.add(
                         me.getYubikeyTab()
@@ -79,7 +79,8 @@ Ext.define('Shopware.apps.MittwaldSecurityTools.view.user.Create', {
             'saveUser': function (record, formPanel) {
                 if (me.yubikeyField.getValue() && me.yubikeyField.getValue().length > 24) {
                     me.hiddenYubikeyField.setValue(me.yubikeyField.getValue());
-                    me.attributeForm.saveAttribute(me.record.get('id'));
+
+                    me.attributeForm.fields.push(me.hiddenYubikeyField);
                 }
             }
         });

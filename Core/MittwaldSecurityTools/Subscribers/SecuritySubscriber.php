@@ -580,6 +580,10 @@ class SecuritySubscriber implements SubscriberInterface
          */
         $controller = $args->getSubject();
 
+        if($controller->Request()->getControllerName() == 'SwagDigitalPublishing') {
+            return;
+        }
+
         $view = $controller->View();
         $view->extendsTemplate($this->pluginPath . '/Views/backend/index/header.tpl');
     }
